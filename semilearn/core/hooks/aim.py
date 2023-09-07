@@ -15,7 +15,9 @@ class AimHook(Hook):
         super().__init__()
         self.log_key_list = ['train/sup_loss', 'train/unsup_loss', 'train/total_loss', 'train/util_ratio', 
                              'train/run_time', 'train/prefetch_time', 'lr',
-                             'eval/top-1-acc', 'eval/precision', 'eval/recall', 'eval/F1']
+                             'eval/top-1-acc', 'eval/precision', 'eval/recall', 'eval/F1',
+                             'eval/mse', 'eval/rmse', 'eval/mae', 'eval/mape', 'eval/r2',
+                            ]
 
     def before_run(self, algorithm):
         # initialize aim run
@@ -25,7 +27,6 @@ class AimHook(Hook):
 
         # set configuration
         self.run['hparams'] = algorithm.args.__dict__
-
 
         # set tag
         benchmark = f'benchmark: {project}'
@@ -46,4 +47,8 @@ class AimHook(Hook):
                     self.run.track(item, name=key, step=algorithm.it)
         
         if self.every_n_iters(algorithm, algorithm.num_eval_iter):
-            self.run.track(algorithm.best_eval_acc, name='eval/best-acc', step=algorithm.it)
+            task_type = getattr(algorithm, 'task_type', 'cls')
+            if task_type == 'cls':
+                self.run.track(algorithm.best_eval_metric, name='eval/best-acc', step=algorithm.it)
+            else:
+                self.run.track(algorithm.best_eval_metric, name='eval/best-mse', step=algorithm.it)

@@ -22,4 +22,3 @@ class EMAHook(Hook):
             algorithm.ema.update()
             algorithm.ema_model.load_state_dict(algorithm.model.state_dict())
             algorithm.ema_model.load_state_dict(algorithm.ema.shadow, strict=False)
-

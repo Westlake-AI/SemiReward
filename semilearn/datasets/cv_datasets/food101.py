@@ -88,5 +88,4 @@ class Food101Dataset(BasicDataset):
         path = self.data[idx]
         img = Image.open(path).convert("RGB")
         target = self.targets[idx]
-        return img, target 
-
+        return img, target

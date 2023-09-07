@@ -6,15 +6,17 @@ import contextlib
 import numpy as np
 from inspect import signature
 from collections import OrderedDict
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, precision_score, recall_score, f1_score, confusion_matrix,
+                             mean_squared_error, mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score)
 
 import torch
 import torch.nn.functional as F
 from torch.cuda.amp import autocast, GradScaler
 
-from semilearn.core.hooks import Hook, get_priority, CheckpointHook, TimerHook, LoggingHook, DistSamplerSeedHook, ParamUpdateHook, EvaluationHook, EMAHook, WANDBHook, AimHook
+from semilearn.core.hooks import (Hook, get_priority, CheckpointHook, TimerHook, LoggingHook, DistSamplerSeedHook, ParamUpdateHook,
+                                  EvaluationHook, EMAHook, WANDBHook, AimHook)
 from semilearn.core.utils import get_dataset, get_data_loader, get_optimizer, get_cosine_schedule_with_warmup, Bn_Controller
-from semilearn.core.criterions import CELoss, ConsistencyLoss
+from semilearn.core.criterions import CELoss, ConsistencyLoss, RegLoss
 
 
 class AlgorithmBase:
@@ -58,7 +60,7 @@ class AlgorithmBase:
         self.resume = args.resume
         self.algorithm = args.algorithm
 
-        # common utils arguments
+        # commaon utils arguments
         self.tb_log = tb_log
         self.print_fn = print if logger is None else logger.info
         self.ngpus_per_node = torch.cuda.device_count()
@@ -72,7 +74,7 @@ class AlgorithmBase:
         # common model related parameters
         self.it = 0
         self.start_epoch = 0
-        self.best_eval_acc, self.best_it = 0.0, 0
+        self.best_eval_metric, self.best_it = 0.0, 0
         self.bn_controller = Bn_Controller()
         self.net_builder = net_builder
         self.ema = None
@@ -92,6 +94,12 @@ class AlgorithmBase:
 
         # build supervised loss and unsupervised loss
         self.ce_loss = CELoss()
+        self.task_type = 'cls'
+        if self.args.__contains__('loss_type'):
+            if self.args.loss_type != 'ce_loss':
+                self.ce_loss = RegLoss(mode=self.args.loss_type)
+                self.task_type = 'reg'
+                self.best_eval_metric = 1e10
         self.consistency_loss = ConsistencyLoss()
 
         # other arguments specific to the algorithm
@@ -107,7 +115,6 @@ class AlgorithmBase:
         algorithm specific init function, to add parameters into class
         """
         raise NotImplementedError
-    
 
     def set_dataset(self):
         """
@@ -240,7 +247,6 @@ class AlgorithmBase:
                 var = var.cuda(self.gpu)
             input_dict[arg] = var
         return input_dict
-    
 
     def process_out_dict(self, out_dict=None, **kwargs):
         """
@@ -254,7 +260,6 @@ class AlgorithmBase:
         
         # process res_dict, add output from res_dict to out_dict if necessary
         return out_dict
-
 
     def process_log_dict(self, log_dict=None, prefix='train', **kwargs):
         """
@@ -280,7 +285,6 @@ class AlgorithmBase:
         # record log_dict
         # return log_dict
         raise NotImplementedError
-
 
     def train(self):
         """
@@ -343,32 +347,46 @@ class AlgorithmBase:
                 total_num += num_batch
 
                 logits = self.model(x)[out_key]
-                
-                loss = F.cross_entropy(logits, y, reduction='mean', ignore_index=-1)
-                y_true.extend(y.cpu().tolist())
-                y_pred.extend(torch.max(logits, dim=-1)[1].cpu().tolist())
+                if self.task_type == 'cls':
+                    loss = F.cross_entropy(logits, y, reduction='mean', ignore_index=-1)
+                    y_true.extend(y.cpu().tolist())
+                    y_pred.extend(torch.max(logits, dim=-1)[1].cpu().tolist())
+                else:
+                    loss = self.ce_loss(logits, y, reduction='mean')
+                    y_true.extend(y.cpu().tolist())
+                    y_pred.extend(logits.cpu().tolist())
                 y_logits.append(logits.cpu().numpy())
                 total_loss += loss.item() * num_batch
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
         y_logits = np.concatenate(y_logits)
-        top1 = accuracy_score(y_true, y_pred)
-        balanced_top1 = balanced_accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred, average='macro')
-        recall = recall_score(y_true, y_pred, average='macro')
-        F1 = f1_score(y_true, y_pred, average='macro')
 
-        cf_mat = confusion_matrix(y_true, y_pred, normalize='true')
-        self.print_fn('confusion matrix:\n' + np.array_str(cf_mat))
+        if self.task_type == 'cls':
+            top1 = accuracy_score(y_true, y_pred)
+            balanced_top1 = balanced_accuracy_score(y_true, y_pred)
+            precision = precision_score(y_true, y_pred, average='macro')
+            recall = recall_score(y_true, y_pred, average='macro')
+            F1 = f1_score(y_true, y_pred, average='macro')
+
+            cf_mat = confusion_matrix(y_true, y_pred, normalize='true')
+            self.print_fn('confusion matrix:\n' + np.array_str(cf_mat))
+            eval_dict = {eval_dest+'/loss': total_loss / total_num, eval_dest+'/top-1-acc': top1,
+                        eval_dest+'/balanced_acc': balanced_top1, eval_dest+'/precision': precision, eval_dest+'/recall': recall, eval_dest+'/F1': F1}
+        else:
+            mse = mean_squared_error(y_true, y_pred)
+            rmse = mean_squared_error(y_true, y_pred, squared=False)
+            mae = mean_absolute_error(y_true, y_pred)
+            mape = mean_absolute_percentage_error(y_true, y_pred)
+            r2 = r2_score(y_true, y_pred)
+            eval_dict = {eval_dest+'/loss': total_loss / total_num, eval_dest+'/mse': mse,
+                        eval_dest+'/rmse': rmse, eval_dest+'/mae': mae, eval_dest+'/mape': mape, eval_dest+'/r2': r2}
+
         self.ema.restore()
         self.model.train()
 
-        eval_dict = {eval_dest+'/loss': total_loss / total_num, eval_dest+'/top-1-acc': top1, 
-                     eval_dest+'/balanced_acc': balanced_top1, eval_dest+'/precision': precision, eval_dest+'/recall': recall, eval_dest+'/F1': F1}
         if return_logits:
             eval_dict[eval_dest+'/logits'] = y_logits
         return eval_dict
-
 
     def get_save_dict(self):
         """
@@ -383,12 +401,14 @@ class AlgorithmBase:
             'it': self.it + 1,
             'epoch': self.epoch + 1,
             'best_it': self.best_it,
-            'best_eval_acc': self.best_eval_acc,
         }
+        if self.task_type == 'cls':
+            save_dict['best_eval_acc'] = self.best_eval_metric
+        else:
+            save_dict['best_eval_mse'] = self.best_eval_metric
         if self.scheduler is not None:
             save_dict['scheduler'] = self.scheduler.state_dict()
         return save_dict
-    
 
     def save_model(self, save_name, save_path):
         """
@@ -400,7 +420,6 @@ class AlgorithmBase:
         save_dict = self.get_save_dict()
         torch.save(save_dict, save_filename)
         self.print_fn(f"model saved: {save_filename}")
-
 
     def load_model(self, load_path):
         """
@@ -414,7 +433,10 @@ class AlgorithmBase:
         self.start_epoch = checkpoint['epoch']
         self.epoch = self.start_epoch
         self.best_it = checkpoint['best_it']
-        self.best_eval_acc = checkpoint['best_eval_acc']
+        if self.task_type == 'cls':
+            self.best_eval_metric = checkpoint['best_eval_acc']
+        else:
+            self.best_eval_metric = checkpoint['best_eval_mse']
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         if self.scheduler is not None and 'scheduler' in checkpoint:
             self.scheduler.load_state_dict(checkpoint['scheduler'])
@@ -470,8 +492,6 @@ class AlgorithmBase:
         self.hooks_dict = OrderedDict()
         for hook in self._hooks:
             self.hooks_dict[hook.name] = hook
-        
-
 
     def call_hook(self, fn_name, hook_name=None, *args, **kwargs):
         """Call all hooks.
@@ -479,7 +499,7 @@ class AlgorithmBase:
             fn_name (str): The function name in each hook to be called, such as
                 "before_train_epoch".
             hook_name (str): The specific hook name to be called, such as
-                "param_update" or "dist_align", used to call single hook in train_step.
+                "param_update" or "dist_align", uesed to call single hook in train_step.
         """
         
         if hook_name is not None:
@@ -495,14 +515,12 @@ class AlgorithmBase:
         """
         return hook_name in self.hooks_dict
 
-
     @staticmethod
     def get_argument():
         """
-        Get specified arguments into argparse for each algorithm
+        Get specificed arguments into argparse for each algorithm
         """
         return {}
-
 
 
 class ImbAlgorithmBase(AlgorithmBase):
@@ -513,12 +531,12 @@ class ImbAlgorithmBase(AlgorithmBase):
         self.lb_imb_ratio = self.args.lb_imb_ratio
         self.ulb_imb_ratio = self.args.ulb_imb_ratio
         self.imb_algorithm = self.args.imb_algorithm
-    
+
     def imb_init(self, *args, **kwargs):
         """
-        initialize imbalanced algorithm parameters
+        intiialize imbalanced algorithm parameters
         """
-        pass 
+        pass
 
     def set_optimizer(self):
         if 'vit' in self.args.net and self.args.dataset in ['cifar100', 'food101', 'semi_aves', 'semi_aves_out']:

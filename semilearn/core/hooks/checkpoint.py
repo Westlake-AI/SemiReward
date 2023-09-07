@@ -21,5 +21,3 @@ class CheckpointHook(Hook):
 
                 if algorithm.it == algorithm.best_it:
                     algorithm.save_model('model_best.pth', save_path)
-
-        
