@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+from .agedb import get_agedb
 from .aves import get_semi_aves
 from .cifar import get_cifar
 from .eurosat import get_eurosat
