@@ -70,7 +70,8 @@ def get_dataset(args, algorithm, dataset, num_labels, num_classes, data_dir='./d
         data_dir: data folder
         include_lb_to_ulb: flag of including labeled data into unlabeled data
     """
-    from semilearn.datasets import get_agedb, get_eurosat, get_medmnist, get_semi_aves, get_cifar, get_svhn, get_stl10, get_imagenet, get_imdb_wiki, get_json_dset, get_pkl_dset
+    from semilearn.datasets import (get_agedb, get_eurosat, get_medmnist, get_semi_aves, get_cifar, get_svhn, get_stl10, get_imagenet,
+                                    get_imdb_wiki, get_rcfmnist, get_json_dset, get_pkl_dset)
 
     if dataset == "eurosat":
         lb_dset, ulb_dset, eval_dset = get_eurosat(args, algorithm, dataset, num_labels, num_classes, data_dir=data_dir, include_lb_to_ulb=include_lb_to_ulb)
@@ -101,6 +102,9 @@ def get_dataset(args, algorithm, dataset, num_labels, num_classes, data_dir='./d
         test_dset = None
     elif dataset == "imdb_wiki":
         lb_dset, ulb_dset, eval_dset = get_imdb_wiki(args, algorithm, dataset, num_labels, data_dir=data_dir)
+        test_dset = None
+    elif dataset == "rcfmnist":
+        lb_dset, ulb_dset, eval_dset = get_rcfmnist(args, algorithm, dataset, num_labels, data_dir=data_dir)
         test_dset = None
     # speech dataset
     elif dataset in ['esc50', 'fsdnoisy', 'gtzan', 'superbks', 'superbsi', 'urbansound8k']:
