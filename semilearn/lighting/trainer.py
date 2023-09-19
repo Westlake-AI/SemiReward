@@ -26,6 +26,7 @@ class Trainer:
         self.save_path = os.path.join(config.save_dir, config.save_name)
         self.logger = get_logger(config.save_name, save_path=self.save_path, level="INFO")
 
+
     def fit(self, train_lb_loader, train_ulb_loader, eval_loader):
         self.algorithm.loader_dict = {
             'train_lb': train_lb_loader,
@@ -33,15 +34,11 @@ class Trainer:
             'eval': eval_loader
         }
         self.algorithm.model.train()
-
-        # EMA Init
-        self.algorithm.ema = EMA(self.algorithm.model, self.algorithm.ema_m)
-        self.algorithm.ema.register()
-
         # train
         self.algorithm.it = 0
         self.algorithm.best_eval_metric = 0.0
         self.algorithm.best_epoch = 0
+        self.algorithm.call_hook("before_run")
         if self.algorithm.task_type == 'reg':
             self.algorithm.best_eval_metric = 1e10
 
@@ -61,8 +58,12 @@ class Trainer:
                 if self.algorithm.it > self.config.num_train_iter:
                     break
                 
-                result = self.algorithm.train_step(**self.algorithm.process_batch(**data_lb, **data_ulb))
-
+                self.algorithm.call_hook("before_train_step")
+                out_dict, log_dict = self.algorithm.train_step(**self.algorithm.process_batch(**data_lb, **data_ulb))
+                self.algorithm.out_dict = out_dict
+                self.algorithm.log_dict = log_dict
+                self.algorithm.call_hook("after_train_step")
+                
                 bar.suffix = ("Iter: {batch:4}/{iter:4}.".format(batch=self.algorithm.it, iter=len(train_lb_loader)))
                 bar.next()
                 self.algorithm.it += 1
@@ -96,6 +97,7 @@ class Trainer:
             self.logger.info("Best mse {:.4f} at epoch {:d}".format(self.algorithm.best_eval_metric, self.algorithm.best_epoch))
         self.logger.info("Training finished.")
 
+
     def evaluate(self, data_loader, use_ema_model=False):
         y_pred, y_logits, y_true = self.predict(data_loader, use_ema_model, return_gt=True)
         if self.algorithm.task_type == 'cls':
@@ -119,6 +121,7 @@ class Trainer:
         for key, item in result_dict.items():
             self.logger.info("{:s}: {:.4f}".format(key, item))
         return result_dict
+
 
     def predict(self, data_loader, use_ema_model=False, return_gt=False):
         self.algorithm.model.eval()

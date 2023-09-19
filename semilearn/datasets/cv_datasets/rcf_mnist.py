@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from torchvision.datasets import FashionMNIST
+from torchvision.datasets import CIFAR10, FashionMNIST
 from semilearn.datasets.cv_datasets.datasetbase import BasicDataset
 from semilearn.datasets.augmentation import RandomResizedCropAndInterpolation
 from semilearn.datasets.utils import split_ssl_data
@@ -40,7 +40,7 @@ class RCFMNISTDataset(BasicDataset):
 
 
 def img_torch2numpy(img): # N C H W --> N H W C
-    img = img / 2 + 0.5     # unnormalize
+    # img = img / 2 + 0.5     # unnormalize
     npimg = img.numpy()
     if len(img.shape) == 4:
         return np.transpose(npimg, (0, 2, 3, 1))
@@ -53,7 +53,7 @@ def img_numpy2torch(img):# N H W C --> N C H W
     else:
         tmp_img = np.transpose(img, (2, 0 ,1))
     tcimg = torch.tensor(tmp_img)
-    tcimg = (tcimg - 0.5) * 2 # normalize
+    # tcimg = (tcimg - 0.5) * 2 # normalize
     return tcimg
 
 
@@ -73,33 +73,50 @@ def get_all_batches(loader):
     return img_tensor, label_tensor
 
 
-def rotate_img(img, degree=None):
+def rotate_img(img, degree=None, background=None):
     rotate_class = [(360.0 / 60) * i for i in range(60)]
-    # rotate a image by PIL
-    img = img / 2 + 0.5     # unnormalize
-    pil_img = transforms.ToPILImage()(img)
     if degree is None:
         degree = random.sample(rotate_class, 1)[0]
-    r_img = pil_img.rotate(degree)
-    r_img = transforms.ToTensor()(r_img)  # read float
-    r_img = (r_img - 0.5) * 2.0  # normalize
-    return r_img, degree
+        # degree /= 360.
+
+    # rotate a image by PIL
+    if background is not None:
+        img = img_torch2numpy(img) * 255
+        pil_img = Image.fromarray(np.uint8(img))
+        r_img = pil_img.rotate(degree)
+        r_img = np.array(r_img)
+        background[r_img > 2] = 255
+        background = torch.from_numpy(background / 255).type(torch.float32)
+        return background, degree
+        # img = img_torch2numpy(img) * 255
+        # background[img > 2] = 255
+        # pil_img = Image.fromarray(background)
+        # r_img = pil_img.rotate(degree)
+        # r_img = transforms.ToTensor()(r_img)  # read float
+    else:
+        # img = img / 2 + 0.5  # unnormalize
+        pil_img = transforms.ToPILImage()(img)
+        r_img = pil_img.rotate(degree)
+        r_img = transforms.ToTensor()(r_img)  # read float
+        # r_img = (r_img - 0.5) * 2.0  # normalize
+        return r_img, degree
 
 
-def get_rotate_imgs(imgs):
+def get_rotate_imgs(imgs, background=None):
     # rotate set of images
     r_img_list, degree_list = [], []
     for i in range(imgs.shape[0]):
-        r_img, degree = rotate_img(imgs[i])
+        b_img = None if background is None else background[i % background.shape[0]]
+        r_img, degree = rotate_img(imgs[i], background=b_img)
         r_img_list.append(r_img.unsqueeze(0))
-        degree_list.append(torch.Tensor([int(degree)]))
+        degree_list.append(torch.Tensor([degree]))
 
     r_img_list = torch.cat(r_img_list, dim=0)
     degree_list = torch.cat(degree_list, dim=0)
-    r_img_np = img_torch2numpy(r_img_list)
+    r_img_np = r_img_list.numpy()
     degree_np = degree_list.numpy()
 
-    return r_img_np, degree_list
+    return r_img_np, degree_np
 
 
 def copydim(set:np.array, num=3):
@@ -201,10 +218,9 @@ def get_rcfmnist(args, alg='', name=None, num_labels=1000, num_classes=1, data_d
 
     data_dir = os.path.join(data_dir, 'rcf_mnist')
     basic_data_transforms = transforms.Compose([
-                                transforms.Resize(32),
-                                transforms.Grayscale(3), 
-                                transforms.ToTensor(), 
-                                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+                                transforms.Pad(2),
+                                transforms.Grayscale(3),
+                                transforms.ToTensor(),
                             ])
     train_set = FashionMNIST(root=data_dir, train=True, download=True, transform=basic_data_transforms)
     test_set = FashionMNIST(root=data_dir, train=False, download=True, transform=basic_data_transforms)
@@ -212,12 +228,27 @@ def get_rcfmnist(args, alg='', name=None, num_labels=1000, num_classes=1, data_d
     test_loader = DataLoader(test_set, batch_size=1000, shuffle=False, num_workers=2)
     train_data_raw, _ = get_all_batches(train_loader)
     test_data_raw, _ = get_all_batches(test_loader)
+    # print(train_data_raw.shape, test_data_raw.shape)
 
-    train_data, train_labels = get_rotate_imgs(train_data_raw)
-    test_data, test_labels = get_rotate_imgs(test_data_raw)
-    train_data = np.uint8(train_data)  # prepare for numpy to PIL
-    test_data = np.uint8(test_data)
-    train_labels, test_labels = train_labels.cpu().numpy(), test_labels.cpu().numpy()
+    train_back = CIFAR10(root=os.path.join(data_dir, 'cifar10'), train=True, download=True, transform=None)
+    test_back = CIFAR10(root=os.path.join(data_dir, 'cifar10'), train=False, download=True, transform=None)
+    train_back, test_back = train_back.data, test_back.data
+    # print(train_back.shape, test_back.shape)
+
+    train_data, train_labels = get_rotate_imgs(train_data_raw, background=train_back)
+    test_data, test_labels = get_rotate_imgs(test_data_raw, background=test_back)
+    train_data = train_data.astype(np.uint8)
+    test_data = test_data.astype(np.uint8)
+
+    # img = test_data[0]
+    # plt.imshow(img)
+    # plt.savefig('./test1.jpg')
+    # img = test_data_raw[0] / 2 + 0.5
+    # plt.imshow(np.transpose(img, (1, 2, 0)))
+    # plt.savefig('./test2.jpg')
+    # img = test_back[0]
+    # plt.imshow(img)
+    # plt.savefig('./test3.jpg')
 
     img_size = args.img_size
     crop_ratio = args.crop_ratio

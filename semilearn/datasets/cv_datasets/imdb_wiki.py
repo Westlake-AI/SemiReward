@@ -67,6 +67,13 @@ def get_imdb_wiki(args, alg, name=None, num_labels=1000, num_classes=1, data_dir
         transforms.ToTensor(),
         transforms.Normalize(imgnet_mean, imgnet_std)
     ])
+    # transform_strong = transforms.Compose([
+    #     transforms.Resize((img_size, img_size)),
+    #     transforms.RandomCrop(img_size, padding=16, padding_mode="reflect"),
+    #     transforms.RandomHorizontalFlip(),
+    #     transforms.ToTensor(),
+    #     transforms.Normalize(imgnet_mean, imgnet_std),
+    # ])
 
     transform_val = transforms.Compose([
         transforms.Resize((img_size, img_size)),

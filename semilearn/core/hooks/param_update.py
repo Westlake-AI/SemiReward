@@ -43,3 +43,4 @@ class ParamUpdateHook(Hook):
             algorithm.end_run.record()
             torch.cuda.synchronize()
             algorithm.log_dict['train/run_time'] = algorithm.start_run.elapsed_time(algorithm.end_run) / 1000.
+

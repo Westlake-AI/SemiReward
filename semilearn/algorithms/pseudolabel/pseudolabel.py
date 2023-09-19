@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import torch
 import numpy as np
 from semilearn.core import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS
@@ -51,8 +52,15 @@ class PseudoLabel(AlgorithmBase):
 
             # calculate BN only for the first batch
             self.bn_controller.freeze_bn(self.model)
-            outs_x_ulb = self.model(x_ulb_w)
-            logits_x_ulb = outs_x_ulb['logits']
+            if self.task_type == 'cls':
+                outs_x_ulb = self.model(x_ulb_w)
+                logits_x_ulb = outs_x_ulb['logits']
+            else:
+                noisy_x_ulb_w = self.add_gaussian_noise(x_ulb_w, mean=0, std=0.05)
+                outs_x_ulb = self.model(noisy_x_ulb_w)
+                outs_x_ulb_pseudo = self.model(x_ulb_w)
+                logits_x_ulb = outs_x_ulb['logits']
+                outs_x_ulb_pseudo = outs_x_ulb_pseudo['logits']
             feats_x_ulb = outs_x_ulb['feat']
             self.bn_controller.unfreeze_bn(self.model)
 
@@ -65,12 +73,11 @@ class PseudoLabel(AlgorithmBase):
 
             # generate unlabeled targets using pseudo label hook
             pseudo_label = self.call_hook("gen_ulb_targets", "PseudoLabelingHook", 
-                                          logits=logits_x_ulb,
+                                          logits=logits_x_ulb if self.task_type == 'cls' else outs_x_ulb_pseudo,
                                           use_hard_label=True)
 
-            unsup_loss = self.consistency_loss(logits_x_ulb,
-                                               pseudo_label,
-                                               'ce',
+            unsup_loss = self.consistency_loss(logits_x_ulb, pseudo_label,
+                                               name='ce' if self.task_type == 'cls' else 'l1',
                                                mask=mask)
 
             unsup_warmup = np.clip(self.it / (self.unsup_warm_up * self.num_train_iter),  a_min=0.0, a_max=1.0)
@@ -82,6 +89,12 @@ class PseudoLabel(AlgorithmBase):
                                          total_loss=total_loss.item(), 
                                          util_ratio=mask.float().mean().item())
         return out_dict, log_dict
+
+    @staticmethod
+    def add_gaussian_noise(tensor, mean=0, std=1):
+        noise = torch.randn_like(tensor) * std + mean
+        noisy_tensor = tensor + noise
+        return noisy_tensor
 
     @staticmethod
     def get_argument():
