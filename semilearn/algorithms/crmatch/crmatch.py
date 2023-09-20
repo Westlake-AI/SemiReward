@@ -12,6 +12,7 @@ from semilearn.core import AlgorithmBase
 from semilearn.core.utils import get_data_loader, ALGORITHMS
 from semilearn.algorithms.hooks import FixedThresholdingHook
 from semilearn.algorithms.utils import SSL_Argument, str2bool
+from semilearn.core.criterions import ce_loss
 
 
 def rotate_img(img, rot):
@@ -255,7 +256,10 @@ class CRMatch(AlgorithmBase):
             feat_dict = {'x_lb': feats_x_lb, 'x_ulb_w': feats_x_ulb_w, 'x_ulb_s':feats_x_ulb_s}
 
             with torch.no_grad():
-                y_ulb = torch.argmax(logits_x_ulb_w, dim=-1)
+                if self.task_type == 'cls':
+                    y_ulb = torch.argmax(logits_x_ulb_w, dim=-1)
+                else:
+                    y_ulb = logits_x_ulb_w
                 mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=logits_x_ulb_w)    
 
             Lx = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
@@ -271,7 +275,8 @@ class CRMatch(AlgorithmBase):
                     logits_rot = logits_rot[num_lb + 2 * num_ulb:]
                 else:
                     logits_rot = self.model(x_ulb_rot)['logits_rot']
-                Lrot = self.ce_loss(logits_rot, rot_v, reduction='mean')
+                Lrot = self.ce_loss(logits_rot, rot_v, reduction='mean') if self.task_type == 'cls' else \
+                    ce_loss(logits_rot, rot_v, reduction='mean')
                 total_loss += Lrot
 
         out_dict = self.process_out_dict(loss=total_loss, feat=feat_dict)

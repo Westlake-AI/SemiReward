@@ -8,7 +8,7 @@ import numpy as np
 from progress.bar import Bar
 
 from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, confusion_matrix,
-                             mean_squared_error, mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score)
+                            mean_squared_error, mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, r2_score)
 from semilearn.core.utils import get_optimizer, get_cosine_schedule_with_warmup, get_logger, EMA
 
 
