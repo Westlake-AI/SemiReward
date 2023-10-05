@@ -44,11 +44,11 @@ class FlexMatch(AlgorithmBase):
         # flexmatch specified arguments
         self.init(T=args.T, p_cutoff=args.p_cutoff, hard_label=args.hard_label, thresh_warmup=args.thresh_warmup)
         self.it=0
-        self.rewarder = Rewarder(128,384).cuda(self.gpu)
-        self.generator = Generator(384).cuda(self.gpu)
-        self.starttiming=20000
-        self.rewarder_optimizer = torch.optim.Adam(self.rewarder.parameters(), lr=0.0005)
-        self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=0.0005)
+        self.rewarder = Rewarder(128,self.featinput).cuda(self.gpu)
+        self.generator = Generator(self.featinput).cuda(self.gpu)
+        self.starttiming=self.start
+        self.rewarder_optimizer = torch.optim.Adam(self.rewarder.parameters(), lr=self.srlr)
+        self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=self.srlr)
         self.criterion = torch.nn.MSELoss()
 
         self.semi_reward_infer = SemiReward_infer(self.rewarder, self.starttiming)
