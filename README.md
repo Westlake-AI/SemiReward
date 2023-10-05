@@ -77,8 +77,6 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#benchmark-results">Benchmark Results</a></li>
-    <li><a href="#model-zoo">Model Zoo</a></li>
     <li><a href="#contributing">Community</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -89,29 +87,16 @@
 
 ## News and Updates
 
-- [07/07/2023] Add [DeFixmatch](https://arxiv.org/abs/2203.07512). Fixed some bugs. Release semilearn=0.3.1/
-
-- [06/01/2023] USB has officially joined the Pytorch ecosystem! [[Pytorch blog](https://medium.com/p/849f42bbc32a)]
-
-- [01/30/2023] Update semilearn==0.3.0. Add [FreeMatch](https://arxiv.org/abs/2205.07246) and [SoftMatch](https://arxiv.org/abs/2301.10921). Add imbalanced algorithms. Update results and add wandb support. Refer [CHANGE_LOG](CHANGE_LOG.md) for details. [[Results]](https://github.com/microsoft/Semi-supervised-learning/tree/main/results)[[Logs]](https://drive.google.com/drive/folders/1bRSqrRyyuDafgOI3VAuqqiuzHG6CexHF?usp=sharing)[[Wandb]](https://wandb.ai/usb). Older classic logs can be found here: [[TorchSSL Log]](https://1drv.ms/u/s!AlpW9hcyb0KvmyCfsCjGvhDXG5Nb?e=Xc6amH).
-
-- [10/16/2022] Dataset download link and process instructions released! [[Datasets](https://github.com/microsoft/Semi-supervised-learning/tree/main/preprocess)]
-
-- [10/13/2022] We have finished the camera ready version with updated [[Results](https://github.com/microsoft/Semi-supervised-learning/tree/main/results)]. [[Openreview](https://openreview.net/forum?id=QeuwINa96C)]
-
-- [10/06/2022] Training logs and results of USB has been updated! Available dataset will be uploaded soon. [[Logs](https://drive.google.com/drive/folders/1fg3Fxem_UNWhfN5-4x2lRI3mluGxqD4N?usp=sharing)] [[Results](https://github.com/microsoft/Semi-supervised-learning/tree/main/results)]
-
-- [09/17/2022] The USB paper has been accepted by NeurIPS 2022 Dataset and Benchmark Track! [[Openreview](https://openreview.net/forum?id=QeuwINa96C)]
-
-- [08/21/2022] USB has been released!
+- [10/08/2023] SemiReward has been released.
 
 <!-- Introduction -->
 
 ## Introduction
 
-**USB** is a Pytorch-based Python package for Semi-Supervised Learning (SSL). It is easy-to-use/extend, *affordable* to small groups, and comprehensive for developing and evaluating SSL algorithms. USB provides the implementation of 14 SSL algorithms based on Consistency Regularization, and 15 tasks for evaluation from CV, NLP, and Audio domain.
+Semi-supervised Reward framework (SemiReward) is designed to predict reward scores to evaluate and filter out high-quality pseudo labels, which is pluggable to mainstream Semi-Supervised Learning (SSL) methods in wide task types and scenarios. The results and details are reported in our paper [https://arxiv.org/abs/2310.03013]. The training of **SemiReward** is based on **USB**. 
 
-![Code Structure](./figures/code.png)
+_(**USB** is a Pytorch-based Python package for SSL. It is easy-to-use/extend, *affordable* to small groups, and comprehensive for developing and evaluating SSL algorithms. USB provides the implementation of 14 SSL algorithms based on Consistency Regularization, and 15 tasks for evaluation from CV, NLP, and Audio domain. More details can be seen in https://github.com/microsoft/Semi-supervised-learning)_
+
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -120,7 +105,7 @@
 
 ## Getting Started
 
-This is an example of how to set up USB locally.
+First, you need to set up USB locally.
 To get a local copy up, running follow these simple example steps.
 
 ### Prerequisites
@@ -147,7 +132,7 @@ python train.py --c config/usb_cv/fixmatch/fixmatch_cifar100_200_0.yaml
 
 ### Installation
 
-We provide a Python package *semilearn* of USB for users who want to start training/testing the supported SSL algorithms on their data quickly:
+USB provide a Python package *semilearn* of USB for users who want to start training/testing the supported SSL algorithms on their data quickly:
 
 ```sh
 pip install semilearn
@@ -177,18 +162,8 @@ The detailed instructions for downloading and processing are shown in [Dataset D
 
 ## Usage
 
-USB is easy to use and extend. Going through the bellowing examples will help you familiar with USB for quick use, evaluate an existing SSL algorithm on your own dataset, or developing new SSL algorithms.
-
-### Quick Start with USB package
-
-<!-- TODO: add quick start example and refer lighting notebook -->
-
-Please see [Installation](#installation) to install USB first. We provide colab tutorials for:
-
-- [Beginning example](https://colab.research.google.com/drive/1lFygK31jWyTH88ktao6Ow-5nny5-B7v5)
-- [Customize datasets](https://colab.research.google.com/drive/1zbswPm1sM8j0fndUQOeqX2HADdYq-wOw)
-
 ### Start with Docker
+The following steps to train your own SemiReward model just as same with USB.
 
 **Step1: Check your environment**
 
@@ -226,7 +201,7 @@ Here is an example to train one of baselines FlexMatch on CIFAR-100 with 200 lab
 python train.py --c config/usb_cv/flexmatch/flexmatch_cifar100_200_0.yaml
 ```
 
-Here is an example to train FlexMatch with SemiReward on CIFAR-100 with 200 labels. Training other supported algorithms (on other datasets with different label settings) can be specified by a config file:
+Here is an example to train FlexMatch with SemiReward on CIFAR-100 with 200 labels. Training other baselines with SemiReward can be specified by a config file:
 
 ```sh
 python train.py --c config/SemiReward/usb_cv/flexmatch/flexmatch_cifar100_200_0.yaml
@@ -255,51 +230,9 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 
 <!-- BENCHMARK RESULTS -->
 
-## Benchmark Results
-
-Please refer to [Results](./results) for benchmark results on different tasks.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- MODEL ZOO -->
-
-## Model Zoo
-
-TODO: add pre-trained models.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- ROADMAP -->
-
-## TODO
-
-- [ ] Finish Readme
-- [ ] Updating SUPPORT.MD with content about this project's support experience
-- [ ] Multi-language Support
-  - [ ] Chinese
-
-See the [open issues](https://github.com/microsoft/Semi-supervised-learning/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- CONTRIBUTING -->
-
 ## Contributing
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
-
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
-If you have a suggestion that would make USB better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+If you have any ideas to improve SemiReward, we welcome your contributions! Feel free to fork the repository and submit a pull request. Alternatively, you can open an issue and label it as "enhancement." Don't forget to show your support by giving the project a star! Thank you once more!
 
 1. Fork the project
 2. Create your branch (`git checkout -b your_name/your_branch`)
@@ -311,16 +244,6 @@ Don't forget to give the project a star! Thanks again!
 
 <!-- TRADEMARKS -->
 
-## Trademarks
-
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
-trademarks or logos is subject to and must follow
-[Microsoft&#39;s Trademark &amp; Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
-
-<!-- LICENSE -->
-
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
@@ -329,63 +252,27 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <!-- CONTACT -->
 
-## Community and Contact
-
-The USB community is maintained by:
-
-- Yidong Wang (yidongwang37@gmail.com), Tokyo Institute of Technology
-- Hao Chen (haoc3@andrew.cmu.edu), Carnegie Mellon University
-- Yue Fan (yfan@mpi-inf.mpg.de), Max Planck Institute for Informatics
-- Wenxin Hou (wenxinhou@microsoft.com), Microsoft STCA
-- Ran Tao (rant@andrew.cmu.edu), Carnegie Mellon University
-- Jindong Wang (jindwang@microsoft.com), Microsoft Research Asia
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- CITE -->
-
-## Citing USB
+## Citing SemiRward
 
 Please cite us if you fine this project helpful for your project/paper:
 
 ```
-@inproceedings{usb2022,
-  doi = {10.48550/ARXIV.2208.07204},
-  url = {https://arxiv.org/abs/2208.07204},
-  author = {Wang, Yidong and Chen, Hao and Fan, Yue and Sun, Wang and Tao, Ran and Hou, Wenxin and Wang, Renjie and Yang, Linyi and Zhou, Zhi and Guo, Lan-Zhe and Qi, Heli and Wu, Zhen and Li, Yu-Feng and Nakamura, Satoshi and Ye, Wei and Savvides, Marios and Raj, Bhiksha and Shinozaki, Takahiro and Schiele, Bernt and Wang, Jindong and Xie, Xing and Zhang, Yue},
-  title = {USB: A Unified Semi-supervised Learning Benchmark for Classification},
-  booktitle = {Thirty-sixth Conference on Neural Information Processing Systems Datasets and Benchmarks Track}
-  year = {2022}
-}
-
-@article{wang2023freematch,
-  title={FreeMatch: Self-adaptive Thresholding for Semi-supervised Learning},
-  author={Wang, Yidong and Chen, Hao and Heng, Qiang and Hou, Wenxin and Fan, Yue and and Wu, Zhen and Wang, Jindong and Savvides, Marios and Shinozaki, Takahiro and Raj, Bhiksha and Schiele, Bernt and Xie, Xing},
-  booktitle={International Conference on Learning Representations (ICLR)},
+@article{li2023semireward,
+  title={SemiReward: A General Reward Model for Semi-supervised Learning},
+  author={Siyuan Li and Weiyang Jin and Zedong Wang and Fang Wu and Zicheng Liu and Cheng Tan and Stan Z. Li},
+  journal={arXiv preprint arXiv:2310.03013},
   year={2023}
 }
 
-@article{chen2023softmatch,
-  title={SoftMatch: Addressing the Quantity-Quality Trade-off in Semi-supervised Learning},
-  author={Chen, Hao and Tao, Ran and Fan, Yue and Wang, Yidong and Wang, Jindong and Schiele, Bernt and Xie, Xing and Raj, Bhiksha and Savvides, Marios},
-  booktitle={International Conference on Learning Representations (ICLR)},
-  year={2023}
-}
-
-@article{zhang2021flexmatch,
-  title={FlexMatch: Boosting Semi-supervised Learning with Curriculum Pseudo Labeling},
-  author={Zhang, Bowen and Wang, Yidong and Hou, Wenxin and Wu, Hao and Wang, Jindong and Okumura, Manabu and Shinozaki, Takahiro},
-  booktitle={Neural Information Processing Systems (NeurIPS)},
-  year={2021}
-}
 ```
 
 <!-- ACKNOWLEDGMENTS -->
 
 ## Acknowledgments
 
-We thanks the following projects for reference of creating USB:
+We thanks the following projects for reference of creating SemiReward:
 
+- [USB](https://github.com/microsoft/Semi-supervised-learning))
 - [TorchSSL](https://github.com/TorchSSL/TorchSSL)
 - [FixMatch](https://github.com/google-research/fixmatch)
 - [CoMatch](https://github.com/salesforce/CoMatch)
@@ -396,17 +283,3 @@ We thanks the following projects for reference of creating USB:
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- MARKDOWN LINKS & IMAGES -->
-
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-
-[contributors-shield]: https://img.shields.io/github/contributors/microsoft/Semi-supervised-learning.svg?style=for-the-badge
-[contributors-url]: https://github.com/microsoft/Semi-supervised-learning/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/microsoft/Semi-supervised-learning.svg?style=for-the-badge
-[forks-url]: https://github.com/microsoft/Semi-supervised-learning/network/members
-[stars-shield]: https://img.shields.io/github/stars/microsoft/Semi-supervised-learning.svg?style=for-the-badge
-[stars-url]: https://github.com/microsoft/Semi-supervised-learning/stargazers
-[issues-shield]: https://img.shields.io/github/issues/microsoft/Semi-supervised-learning.svg?style=for-the-badge
-[issues-url]: https://github.com/microsoft/Semi-supervised-learning/issues
-[license-shield]: https://img.shields.io/github/license/microsoft/Semi-supervised-learning.svg?style=for-the-badge
-[license-url]: https://github.com/microsoft/Semi-supervised-learning/blob/main/LICENSE.txt
