@@ -272,7 +272,7 @@ Please cite us if you fine this project helpful for your project/paper:
 
 We thanks the following projects for reference of creating SemiReward:
 
-- [USB](https://github.com/microsoft/Semi-supervised-learning))
+- [USB](https://github.com/microsoft/Semi-supervised-learning)
 - [TorchSSL](https://github.com/TorchSSL/TorchSSL)
 - [FixMatch](https://github.com/google-research/fixmatch)
 - [CoMatch](https://github.com/salesforce/CoMatch)
