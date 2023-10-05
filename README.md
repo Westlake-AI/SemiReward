@@ -231,7 +231,7 @@ Here is an example to train FlexMatch with SemiReward on CIFAR-100 with 200 labe
 ```sh
 python train.py --c config/SemiReward/usb_cv/flexmatch/flexmatch_cifar100_200_0.yaml
 ```
-You can change hyperparameters for SemiReward in configurations like othern baseline. If you want to change loss or something is fixed in our method for SemiReward, it is recommanded to open flie from:
+You can change hyperparameters for SemiReward by configurations (.yaml files) like other baselines. If you want to change loss or something is fixed in our method for SemiReward, it is recommanded to open flie from:
 
 ```sh
 semilearn/algorithms/srflexmatch/srflexmatch.py
