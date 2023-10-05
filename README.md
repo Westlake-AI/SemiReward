@@ -235,7 +235,7 @@ If you want to change some hyperparameters for SemiReward, you can open flie fro
 
 ```sh
 semilearn/algorithms/srflexmatch/srflexmatch.py
-```sh
+```
 
 ### Evaluation
 
