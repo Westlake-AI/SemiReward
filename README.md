@@ -220,11 +220,22 @@ to use GPU in a container.
 
 ### Training
 
-Here is an example to train FixMatch on CIFAR-100 with 200 labels. Training other supported algorithms (on other datasets with different label settings) can be specified by a config file:
+Here is an example to train one of baselines FlexMatch on CIFAR-100 with 200 labels. Training other supported algorithms (on other datasets with different label settings) can be specified by a config file:
 
 ```sh
-python train.py --c config/usb_cv/fixmatch/fixmatch_cifar100_200_0.yaml
+python train.py --c config/usb_cv/flexmatch/flexmatch_cifar100_200_0.yaml
 ```
+
+Here is an example to train FlexMatch with SemiReward on CIFAR-100 with 200 labels. Training other supported algorithms (on other datasets with different label settings) can be specified by a config file:
+
+```sh
+python train.py --c config/SemiReward/usb_cv/flexmatch/flexmatch_cifar100_200_0.yaml
+```
+If you want to change some hyperparameters for SemiReward, you can open flie from:
+
+```sh
+semilearn/algorithms/srflexmatch/srflexmatch.py
+```sh
 
 ### Evaluation
 
