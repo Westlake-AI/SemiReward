@@ -35,11 +35,11 @@ class SoftMatch(AlgorithmBase):
         super().__init__(args, net_builder, tb_log, logger) 
         self.init(T=args.T, hard_label=args.hard_label, dist_align=args.dist_align, dist_uniform=args.dist_uniform, ema_p=args.ema_p, n_sigma=args.n_sigma, per_class=args.per_class)
         self.it=0
-        self.rewarder = Rewarder(128,384).cuda(self.gpu)
-        self.generator = Generator(384).cuda(self.gpu)
-        self.starttiming=20000
-        self.rewarder_optimizer = torch.optim.Adam(self.rewarder.parameters(), lr=0.0005)
-        self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=0.0005)
+        self.rewarder = Rewarder(128,self.featinput).cuda(self.gpu)
+        self.generator = Generator(self.featinput).cuda(self.gpu)
+        self.starttiming=self.start
+        self.rewarder_optimizer = torch.optim.Adam(self.rewarder.parameters(), lr=self.srlr)
+        self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=self.srlr)
         self.criterion = torch.nn.MSELoss()
 
         self.semi_reward_infer = SemiReward_infer(self.rewarder, self.starttiming)
