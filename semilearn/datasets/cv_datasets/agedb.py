@@ -30,10 +30,11 @@ class AgeDBIDataset(BasicDataset):
                  **kwargs):
         super(AgeDBIDataset, self).__init__(alg=alg, data=data, targets=targets, num_classes=num_classes,
                 transform=transform, is_ulb=is_ulb, strong_transform=strong_transform, onehot=onehot, *args, **kwargs)
-        self.data_dir = kwargs.get('data_dir', '')
+        data_dir = kwargs.get('data_dir', '')
+        self.data = [os.path.join(data_dir, data) for data in self.data]
 
     def __sample__(self, idx):
-        img = Image.open(os.path.join(self.data_dir, self.data[idx])).convert('RGB')
+        img = Image.open(self.data[idx]).convert('RGB')
         label = np.asarray([self.targets[idx]]).astype('float32')
         return img, label
 

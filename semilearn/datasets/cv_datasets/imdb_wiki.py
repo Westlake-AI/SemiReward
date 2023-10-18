@@ -30,10 +30,11 @@ class IMDBWIKIDataset(BasicDataset):
                  **kwargs):
         super(IMDBWIKIDataset, self).__init__(alg=alg, data=data, targets=targets, num_classes=num_classes,
                 transform=transform, is_ulb=is_ulb, strong_transform=strong_transform, onehot=onehot, *args, **kwargs)
-        self.data_dir = kwargs.get('data_dir', '')
+        data_dir = kwargs.get('data_dir', '')
+        self.data = [os.path.join(data_dir, data) for data in self.data]
 
     def __sample__(self, idx):
-        img = Image.open(os.path.join(self.data_dir, self.data[idx])).convert('RGB')
+        img = Image.open(self.data[idx]).convert('RGB')
         label = np.asarray([self.targets[idx]]).astype('float32')
         return img, label
 
@@ -67,13 +68,6 @@ def get_imdb_wiki(args, alg, name=None, num_labels=1000, num_classes=1, data_dir
         transforms.ToTensor(),
         transforms.Normalize(imgnet_mean, imgnet_std)
     ])
-    # transform_strong = transforms.Compose([
-    #     transforms.Resize((img_size, img_size)),
-    #     transforms.RandomCrop(img_size, padding=16, padding_mode="reflect"),
-    #     transforms.RandomHorizontalFlip(),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize(imgnet_mean, imgnet_std),
-    # ])
 
     transform_val = transforms.Compose([
         transforms.Resize((img_size, img_size)),
