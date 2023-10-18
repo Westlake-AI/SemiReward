@@ -1,10 +1,3 @@
-data_statistics/
-data/
-saved_models/
-pretrained_weights/
-ssl_nlp_datasets/
-back_translate_models/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -141,7 +134,18 @@ dmypy.json
 # MacOS system file
 .DS_Store
 
+# Pytorch
+*.pth
+
 # custom
+data_statistics/
+data/
+saved_models/
+pretrained_weights/
+ssl_nlp_datasets/
+back_translate_models/
 data
 .vscode
 .idea
+*.pkl
+*.swp

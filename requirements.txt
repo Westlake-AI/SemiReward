@@ -1,5 +1,6 @@
 matplotlib>=3.5.2
 numpy>=1.24.4
+pandas
 Pillow>=9.0.0
 progress>=1.6
 ruamel.yaml>=0.17.21

@@ -2,17 +2,23 @@
 
 ## CV Datasets
 
+1. [AgeDB](https://ieeexplore.ieee.org/document/8014984): age regression, high resolution (224 x 224 pixels) human face dataset arranging from [1, 101]. The training set has 106,750 images, and the test set has 15,250 images. Download the dataset from [[official link](https://ibug.doc.ic.ac.uk/resources/agedb/)] or [[Baidu Disk](https://pan.baidu.com/s/1XdibVxiGoWf46HLOHKiIyw?pwd=0n6p)].
+
 1. [CIFAR-100](https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf): 100-class dataset with image size 32 x 32 pixels. For each class, there are 500 training samples and 100 testing samples.
+
+1. [RCF-MNIST](https://arxiv.org/abs/2210.05775): rotation angle regression, the foreground object is rotated with the background image size 32 x 32 pixels from CIFAR-10. There are 50,000 training samples and 10,000 testing samples.
 
 1. [STL10](https://proceedings.mlr.press/v15/coates11a.html): 10-class dataset with image size of 96 x 96 pixels. Each class has 500 training samples and 800 testing samples. Besides labeled set, there is a unlabeled set with 100,000 samples.
 
 1. [TissueMNIST](https://arxiv.org/abs/2010.14925): a medical dataset of human kidney cortex cells, segmented from 3 reference tissue specimens and organized into 8 categories. The total 236,386 training samples are split with a ratio of 7 : 1 : 2 into training (165,466 images), validation (23,640 images) and test set (47,280 images). Each gray-scale image is 28 x 28 pixels.
 
-1. [SemiAves](https://arxiv.org/abs/2103.06937): Aves (birds) classification, where 3,959 images of 200 bird species are labeled and 26,640 images are unlabeled. The validation and test set contain 10 and 20 images respectively for each of the 200 categories in the labeled set.
+1. [SemiAves](https://arxiv.org/abs/2103.06937): Aves (birds) classification, where 3,959 images of 200 bird species are labeled and 26,640 images are unlabeled. The validation and test set contain 10 and 20 images, respectively, for each of the 200 categories in the labeled set.
 
-1. [EuroSAT](https://arxiv.org/abs/1709.00029): covers Sentinel-2 satellite images covering 13 spectral bands and consisting of 10 classes with 27,000 labeled and geo-referenced samples. Training, validation and test set follows 6:2:2 ratio splits. 
+1. [EuroSAT](https://arxiv.org/abs/1709.00029): covers Sentinel-2 satellite images covering 13 spectral bands and consisting of 10 classes with 27,000 labeled and geo-referenced samples. Training, validation, and test set follows 6:2:2 ratio splits. 
 
-1. [ImageNet](https://arxiv.org/abs/1409.0575): 1000-class, high resolution (224 x 224 pixels) recognition dataset. The number of images within each class ranges from 732 to 1300. The validation set consists of 50,000 images, which is evenly distributed across classes.
+1. [ImageNet](https://arxiv.org/abs/1409.0575): 1000-class, high resolution (224 x 224 pixels) recognition dataset. The number of images within each class ranges from 732 to 1300. The validation set consists of 50,000 images, which are evenly distributed across classes.
+
+1. [IMDB-WIKI](https://link.springer.com/article/10.1007/s11263-016-0940-3): age regression, high resolution (224 x 224 pixels) human face dataset arranging from [1, 101]. Combining IMDB and WIKI databases, the training set has 167,562 images, and the test set has 23,938 images. Download datasets from [[download (imdb)](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/imdb_crop.tar)] [[download (wiki)](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/wiki_crop.tar)].
 
 ---
 
@@ -27,7 +33,9 @@
 1. [AG News](https://arxiv.org/abs/1509.01626): is a news topic classification dataset containing 4 classes. Each class contains 30,000 training samples and 1,900 test samples. For USB, we draw 25,000 samples and 2,500 samples per class from training samples to form the training dataset and validation dataset respectively. The test dataset is unchanged.
 
 1. [Yahoo! Answer](https://dl.acm.org/doi/10.5555/1620163.1620201): is a topic classification dataset has 10 categories. Each class contains 140,000 training samples and 6,000 test samples. For USB, we draw 50,000 samples and 5,000 samples per class from training samples to form the training dataset and validation dataset respectively. The test dataset is unchanged.
+
 ---
+
 ## Audio Datasets
 
 1. *GTZAN*: is collected for music genre classification of 10 classes and 100 audio recordings for each class. The maximum length of the recordings is 30 seconds and the original sampling rate is 22,100 Hz. We split 7,000 samples for training, 1,500 for validation, and 1,500 for testing. All recordings are re-sampled at 16,000 Hz.

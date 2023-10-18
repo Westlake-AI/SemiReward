@@ -28,39 +28,29 @@
 <!-- PROJECT LOGO -->
 
 <div align="center">
-<h2>SemiReward: A General Reward Model for Semi-supervised Learning</h2>
+<h2><a href="https://arxiv.org/abs/2310.03013">SemiReward: A General Reward Model for Semi-supervised Learning</a> </h2>
+
+[Siyuan Li](https://lupin1998.github.io/)<sup>\*,1,2</sup>, [Weiyang Jin](https://scholar.google.co.id/citations?hl=zh-CN&user=cazmdIMAAAAJ)<sup>\*,1,2</sup>, [Zedong Wang](https://zedongwang.netlify.app/)<sup>1,2</sup>, [Fang Wu](https://smiles724.github.io/)<sup>1,2</sup>, [Zicheng Liu](https://pone7.github.io/)<sup>1,2</sup>, [Chen Tan](https://chengtan9907.github.io/)<sup>1,2</sup>, [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ&hl=zh-CN)<sup>†,1</sup>
+
+<sup>1</sup>[Westlake University](https://westlake.edu.cn/), <sup>2</sup>[Zhejiang University](https://www.zju.edu.cn/english/)
 </div>
 
-<!-- <br />
-<div align="center">
-  <a href="https://github.com/microsoft/Semi-supervised-learning">
-    <img src="figures/logo.png" alt="Logo" width="400">
-  </a>
+<p align="center">
+<a href="https://arxiv.org/abs/2310.03013" alt="arXiv">
+    <img src="https://img.shields.io/badge/arXiv-2310.03013-b31b1b.svg?style=flat" /></a>
+<a href="https://github.com/Westlake-AI/SemiReward/blob/main/LICENSE.txt" alt="license">
+    <img src="https://img.shields.io/badge/license-Apache--2.0-%23B7A800" /></a>
+<!-- <a href="https://colab.research.google.com/github/Westlake-AI/MogaNet/blob/main/demo.ipynb" alt="Colab">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> -->
+</p>
+
+Semi-supervised Reward framework (SemiReward) is designed to predict reward scores to evaluate and filter out high-quality pseudo labels, which is pluggable to mainstream Semi-Supervised Learning (SSL) methods in wide task types and scenarios. The results and details are reported in [our paper](https://arxiv.org/abs/2310.03013). The implementations and models of **SemiReward** are based on **USB** codebase.
+_**USB** is a Pytorch-based Python package for SSL. It is easy-to-use/extend, *affordable* to small groups, and comprehensive for developing and evaluating SSL algorithms. USB provides the implementation of 14 SSL algorithms based on Consistency Regularization, and 15 tasks for evaluation from CV, NLP, and Audio domain. More details can be seen in [Semi-supervised Learning](https://github.com/microsoft/Semi-supervised-learning)._
 
 <p align="center">
-    <strong>USB</strong>: A Unified Semi-supervised learning Benchmark for CV, NLP, and Audio Classification
-    <br />
-    <a href="https://arxiv.org/abs/2208.07204">Paper</a>
-    ·
-    <a href="https://github.com/microsoft/Semi-supervised-learning/tree/main/results">Benchmark</a>
-    ·
-    <a href="https://colab.research.google.com/drive/1lFygK31jWyTH88ktao6Ow-5nny5-B7v5">Demo</a>
-    ·
-    <a href="https://usb.readthedocs.io/en/main/">Docs</a>
-    ·
-    <a href="https://github.com/microsoft/Semi-supervised-learning/issues">Issue</a>
-    ·
-    <a href="https://www.microsoft.com/en-us/research/lab/microsoft-research-asia/articles/pushing-the-limit-of-semi-supervised-learning-with-the-unified-semi-supervised-learning-benchmark/">Blog</a>
-    ·
-    <a href="https://medium.com/p/849f42bbc32a">Blog (Pytorch)</a>
-    ·
-    <a href="https://zhuanlan.zhihu.com/p/566055279">Blog (Chinese)</a>
-    ·
-    <a href="https://nips.cc/virtual/2022/poster/55710">Video</a>
-    ·
-    <a href="https://www.bilibili.com/video/av474982872/">Video (Chinese)</a>
-  </p>
-</div> -->
+<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/44519745/276408256-f860de7b-bb3c-42c3-8ef9-2f1a91dac55b.png" width=100% height=100% 
+class="center">
+</p>
 
 <!-- TABLE OF CONTENTS -->
 
@@ -83,21 +73,22 @@
   </ol>
 </details>
 
+<!-- Introduction -->
+
+## Introduction
+
+Semi-supervised learning (SSL) has witnessed great progress with various improvements in the self-training framework with pseudo labeling. The main challenge is how to distinguish high-quality pseudo labels against the confirmation bias. However, existing pseudo-label selection strategies are limited to pre-defined schemes or complex hand-crafted policies specially designed for classification, failing to achieve high-quality labels, fast convergence, and task versatility simultaneously. To these ends, we propose a Semi-supervised Reward framework (SemiReward) that predicts reward scores to evaluate and filter out high-quality pseudo labels, which is pluggable to mainstream SSL methods in wide task types and scenarios. To mitigate confirmation bias, SemiReward is trained online in two stages with a generator model and subsampling strategy. With classification and regression tasks on 13 standard SSL benchmarks of three modalities, extensive experiments verify that SemiReward achieves significant performance gains and faster convergence speeds upon Pseudo Label, FlexMatch, and Free/SoftMatch.
+
+<p align="center">
+<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/44519745/276409517-7a7907f5-01b9-4953-818d-767c0dfb9c6b.png" width=90% 
+class="center">
+</p>
+
 <!-- News and Updates -->
 
 ## News and Updates
 
 - [10/18/2023] SemiReward has been released.
-
-<!-- Introduction -->
-
-## Introduction
-
-Semi-supervised Reward framework (SemiReward) is designed to predict reward scores to evaluate and filter out high-quality pseudo labels, which is pluggable to mainstream Semi-Supervised Learning (SSL) methods in wide task types and scenarios. The results and details are reported in our paper [https://arxiv.org/abs/2310.03013]. The training of **SemiReward** is based on **USB**. 
-
-_(**USB** is a Pytorch-based Python package for SSL. It is easy-to-use/extend, *affordable* to small groups, and comprehensive for developing and evaluating SSL algorithms. USB provides the implementation of 14 SSL algorithms based on Consistency Regularization, and 15 tasks for evaluation from CV, NLP, and Audio domain. More details can be seen in https://github.com/microsoft/Semi-supervised-learning)_
-
-
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -142,10 +133,10 @@ pip install semilearn
 
 ### Development
 
-You can also develop your own SSL algorithm and evaluate it by cloning USB:
+You can also develop your own SSL algorithm and evaluate it by cloning SemiReward (USB):
 
 ```sh
-git clone https://github.com/microsoft/Semi-supervised-learning.git
+git clone https://github.com/Westlake-AI/SemiReward.git
 ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -263,14 +254,13 @@ Please cite us if you fine this project helpful for your project/paper:
   journal={arXiv preprint arXiv:2310.03013},
   year={2023}
 }
-
 ```
 
 <!-- ACKNOWLEDGMENTS -->
 
 ## Acknowledgments
 
-We thanks the following projects for reference of creating SemiReward:
+SemiReward's implementation is mainly based on the following codebases. We gratefully thank the authors for their wonderful works:
 
 - [USB](https://github.com/microsoft/Semi-supervised-learning)
 - [TorchSSL](https://github.com/TorchSSL/TorchSSL)
@@ -282,4 +272,3 @@ We thanks the following projects for reference of creating SemiReward:
 - [README Template](https://github.com/othneildrew/Best-README-Template)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
