@@ -115,7 +115,7 @@ USB is built on pytorch, with torchvision, torchaudio, and transformers.
 To install the required packages, you can create a conda environment:
 
 ```sh
-conda create --name usb python=3.8
+conda create --name semireward python=3.8
 ```
 
 then use pip to install required packages:
