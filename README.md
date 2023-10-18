@@ -87,7 +87,7 @@
 
 ## News and Updates
 
-- [10/08/2023] SemiReward has been released.
+- [10/18/2023] SemiReward has been released.
 
 <!-- Introduction -->
 
