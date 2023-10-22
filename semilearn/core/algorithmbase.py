@@ -135,7 +135,7 @@ class AlgorithmBase:
         return dataset_dict
 
     def sr_decay(self):
-        num = int(1+(self.num_train_iter/self.it)*1.3)
+        num = int(1+(self.num_train_iter/self.it)*1)
         return num
 
     def set_data_loader(self):
