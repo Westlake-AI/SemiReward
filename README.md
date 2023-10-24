@@ -30,7 +30,7 @@
 <div align="center">
 <h2><a href="https://arxiv.org/abs/2310.03013">SemiReward: A General Reward Model for Semi-supervised Learning</a> </h2>
 
-[Siyuan Li](https://lupin1998.github.io/)<sup>\*,1,2</sup>, [Weiyang Jin](https://scholar.google.co.id/citations?hl=zh-CN&user=cazmdIMAAAAJ)<sup>\*,1,2</sup>, [Zedong Wang](https://zedongwang.netlify.app/)<sup>1,2</sup>, [Fang Wu](https://smiles724.github.io/)<sup>1,2</sup>, [Zicheng Liu](https://pone7.github.io/)<sup>1,2</sup>, [Chen Tan](https://chengtan9907.github.io/)<sup>1,2</sup>, [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ&hl=zh-CN)<sup>†,1</sup>
+[Siyuan Li](https://lupin1998.github.io/)<sup>\*,1,2</sup>, [Weiyang Jin](https://scholar.google.co.id/citations?hl=zh-CN&user=cazmdIMAAAAJ)<sup>\*,1</sup>, [Zedong Wang](https://zedongwang.netlify.app/)<sup>1,2</sup>, [Fang Wu](https://smiles724.github.io/)<sup>1,2</sup>, [Zicheng Liu](https://pone7.github.io/)<sup>1,2</sup>, [Chen Tan](https://chengtan9907.github.io/)<sup>1,2</sup>, [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ&hl=zh-CN)<sup>†,1</sup>
 
 <sup>1</sup>[Westlake University](https://westlake.edu.cn/), <sup>2</sup>[Zhejiang University](https://www.zju.edu.cn/english/)
 </div>
@@ -88,11 +88,10 @@ class="center">
 
 ## News and Updates
 
-- [10/18/2023] SemiReward has been released.
+- [10/18/2023] SemiReward v0.1.0 has been released.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- GETTING STARTED -->
 
 ## Getting Started
 
@@ -148,8 +147,6 @@ The detailed instructions for downloading and processing are shown in [Dataset D
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-
-<!-- USAGE EXAMPLES -->
 
 ## Usage
 
@@ -219,7 +216,6 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- BENCHMARK RESULTS -->
 
 ## Contributing
 
@@ -233,7 +229,6 @@ If you have any ideas to improve SemiReward, we welcome your contributions! Feel
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- TRADEMARKS -->
 
 ## License
 
@@ -241,11 +236,10 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- CONTACT -->
 
 ## Citing SemiRward
 
-Please cite us if you fine this project helpful for your project/paper:
+Please consider citing us if you find this project helpful for your project/paper:
 
 ```
 @article{li2023semireward,
@@ -256,7 +250,6 @@ Please cite us if you fine this project helpful for your project/paper:
 }
 ```
 
-<!-- ACKNOWLEDGMENTS -->
 
 ## Acknowledgments
 
@@ -270,5 +263,12 @@ SemiReward's implementation is mainly based on the following codebases. We grate
 - [HuggingFace](https://huggingface.co/docs/transformers/index)
 - [Pytorch Lighting](https://github.com/Lightning-AI/lightning)
 - [README Template](https://github.com/othneildrew/Best-README-Template)
+
+## Contribution and Contact
+
+For adding new features, looking for helps, or reporting bugs associated with `SemiReward`, please open a [GitHub issue](https://github.com/Westlake-AI/SemiReward/issues) and [pull request](https://github.com/Westlake-AI/SemiReward/pulls) with the tag "new features" or "help wanted". Feel free to contact us through email if you have any questions.
+
+- Siyuan Li (lisiyuan@westlake.edu.cn), Westlake University & Zhejiang University
+- Weiyang Jin (wayneyjin@gmail.com), Westlake University & Beijing Jiaotong University
 
 <p align="right">(<a href="#top">back to top</a>)</p>

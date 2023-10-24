@@ -7,7 +7,8 @@ from semilearn.core import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS
 from semilearn.algorithms.hooks import PseudoLabelingHook, FixedThresholdingHook
 from semilearn.algorithms.utils import SSL_Argument
-from semilearn.algorithms.semireward.main import add_gaussian_noise
+from semilearn.algorithms.semireward import add_gaussian_noise
+
 
 @ALGORITHMS.register('pseudolabel')
 class PseudoLabel(AlgorithmBase):
@@ -33,6 +34,7 @@ class PseudoLabel(AlgorithmBase):
         super().__init__(args, net_builder, tb_log, logger, **kwargs)
         self.init(p_cutoff=args.p_cutoff, unsup_warm_up=args.unsup_warm_up)
         self.task = args.task_type
+
     def init(self, p_cutoff, unsup_warm_up=0.4):
         self.p_cutoff = p_cutoff
         self.unsup_warm_up = unsup_warm_up 

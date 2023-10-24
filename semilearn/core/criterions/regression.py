@@ -80,6 +80,6 @@ class RegLoss(nn.Module):
         self.criterion = eval(self.mode)
 
     def forward(self, logits, targets, reduction='mean'):
-        if logits.dim() == 2 and targets.dim() < 2:
-            targets = targets.view(targets.shape[0], logits.shape[1])
+        if logits.shape != targets.shape:
+            targets = targets.view(logits.shape)
         return self.criterion(logits, targets, reduction=reduction)

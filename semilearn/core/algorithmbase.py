@@ -1,20 +1,49 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import os
 import contextlib
-import numpy as np
-from inspect import signature
+import os
 from collections import OrderedDict
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from inspect import signature
 
+import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.cuda.amp import autocast, GradScaler
-
-from semilearn.core.hooks import Hook, get_priority, CheckpointHook, TimerHook, LoggingHook, DistSamplerSeedHook, ParamUpdateHook, EvaluationHook, EMAHook, WANDBHook, AimHook
-from semilearn.core.utils import get_dataset, get_data_loader, get_optimizer, get_cosine_schedule_with_warmup, Bn_Controller
-from semilearn.core.criterions import CELoss, ConsistencyLoss
+from semilearn.core.criterions import CELoss, ConsistencyLoss, RegLoss
+from semilearn.core.hooks import (
+    AimHook,
+    CheckpointHook,
+    DistSamplerSeedHook,
+    EMAHook,
+    EvaluationHook,
+    Hook,
+    LoggingHook,
+    ParamUpdateHook,
+    TimerHook,
+    WANDBHook,
+    get_priority,
+)
+from semilearn.core.utils import (
+    Bn_Controller,
+    get_cosine_schedule_with_warmup,
+    get_data_loader,
+    get_dataset,
+    get_optimizer,
+)
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    mean_squared_error,
+    mean_squared_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    r2_score
+)
+from torch.cuda.amp import GradScaler, autocast
 
 
 class AlgorithmBase:
@@ -76,10 +105,11 @@ class AlgorithmBase:
         self.rank = args.rank
         self.distributed = args.distributed
         self.world_size = args.world_size
+
         # common model related parameters
         self.it = 0
         self.start_epoch = 0
-        self.best_eval_acc, self.best_it = 0.0, 0
+        self.best_eval_metric, self.best_it = 0.0, 0
         self.bn_controller = Bn_Controller()
         self.net_builder = net_builder
         self.ema = None
@@ -100,6 +130,12 @@ class AlgorithmBase:
         # build supervised loss and unsupervised loss
         self.ce_loss = CELoss()
         self.consistency_loss = ConsistencyLoss()
+        self.task_type = 'cls'
+        if self.args.__contains__('loss_type'):
+            if self.args.loss_type != 'ce_loss':
+                self.ce_loss = RegLoss(mode=self.args.loss_type)
+                self.task_type = 'reg'
+                self.best_eval_metric = 1e10
 
         # other arguments specific to the algorithm
         # self.init(**kwargs)
@@ -109,13 +145,11 @@ class AlgorithmBase:
         self.hooks_dict = OrderedDict() # actual object to be used to call hooks
         self.set_hooks()
 
-
     def init(self, **kwargs):
         """
         algorithm specific init function, to add parameters into class
         """
         raise NotImplementedError
-    
 
     def set_dataset(self):
         """
@@ -123,18 +157,35 @@ class AlgorithmBase:
         """
         if self.rank != 0 and self.distributed:
             torch.distributed.barrier()
-        dataset_dict = get_dataset(self.args, self.algorithm, self.args.dataset, self.args.num_labels, self.args.num_classes, self.args.data_dir, self.args.include_lb_to_ulb)
+        dataset_dict = get_dataset(
+            self.args,
+            self.algorithm,
+            self.args.dataset,
+            self.args.num_labels,
+            self.args.num_classes,
+            self.args.data_dir,
+            self.args.include_lb_to_ulb,
+        )
         if dataset_dict is None:
             return dataset_dict
 
-        self.args.ulb_dest_len = len(dataset_dict['train_ulb']) if dataset_dict['train_ulb'] is not None else 0
-        self.args.lb_dest_len = len(dataset_dict['train_lb'])
-        self.print_fn("unlabeled data number: {}, labeled data number {}".format(self.args.ulb_dest_len, self.args.lb_dest_len))
+        self.args.ulb_dest_len = (
+            len(dataset_dict["train_ulb"])
+            if dataset_dict["train_ulb"] is not None
+            else 0)
+        self.args.lb_dest_len = len(dataset_dict["train_lb"])
+        self.print_fn(
+            "unlabeled data number: {}, labeled data number {}".format(
+                self.args.ulb_dest_len, self.args.lb_dest_len
+            ))
         if self.rank == 0 and self.distributed:
             torch.distributed.barrier()
         return dataset_dict
 
     def sr_decay(self):
+        """
+        decay ratio in SemiReward
+        """
         num = int(1+(self.num_train_iter/self.it)*1)
         return num
 
@@ -189,7 +240,12 @@ class AlgorithmBase:
         set optimizer for algorithm
         """
         self.print_fn("Create optimizer and scheduler")
-        optimizer = get_optimizer(self.model, self.args.optim, self.args.lr, self.args.momentum, self.args.weight_decay, self.args.layer_decay)
+        optimizer = get_optimizer(self.model,
+                                  self.args.optim,
+                                  self.args.lr,
+                                  self.args.momentum,
+                                  self.args.weight_decay,
+                                  self.args.layer_decay)
         scheduler = get_cosine_schedule_with_warmup(optimizer,
                                                     self.num_train_iter,
                                                     num_warmup_steps=self.args.num_warmup_iter)
@@ -199,7 +255,10 @@ class AlgorithmBase:
         """
         initialize model
         """
-        model = self.net_builder(num_classes=self.num_classes, pretrained=self.args.use_pretrain, pretrained_path=self.args.pretrain_path)
+        model = self.net_builder(
+            num_classes=self.num_classes,
+            pretrained=self.args.use_pretrain,
+            pretrained_path=self.args.pretrain_path)
         return model
 
     def set_ema_model(self):
@@ -252,7 +311,6 @@ class AlgorithmBase:
                 var = var.cuda(self.gpu)
             input_dict[arg] = var
         return input_dict
-    
 
     def process_out_dict(self, out_dict=None, **kwargs):
         """
@@ -266,7 +324,6 @@ class AlgorithmBase:
         
         # process res_dict, add output from res_dict to out_dict if necessary
         return out_dict
-
 
     def process_log_dict(self, log_dict=None, prefix='train', **kwargs):
         """
@@ -292,7 +349,6 @@ class AlgorithmBase:
         # record log_dict
         # return log_dict
         raise NotImplementedError
-
 
     def train(self):
         """
@@ -325,8 +381,7 @@ class AlgorithmBase:
 
         self.call_hook("after_run")
 
-
-    def evaluate(self, eval_dest='eval', out_key='logits', return_logits=False):
+    def evaluate(self, eval_dest="eval", out_key="logits", return_logits=False):
         """
         evaluation function
         """
@@ -342,9 +397,9 @@ class AlgorithmBase:
         y_logits = []
         with torch.no_grad():
             for data in eval_loader:
-                x = data['x_lb']
-                y = data['y_lb']
-                
+                x = data["x_lb"]
+                y = data["y_lb"]
+
                 if isinstance(x, dict):
                     x = {k: v.cuda(self.gpu) for k, v in x.items()}
                 else:
@@ -355,52 +410,86 @@ class AlgorithmBase:
                 total_num += num_batch
 
                 logits = self.model(x)[out_key]
-                
-                loss = F.cross_entropy(logits, y, reduction='mean', ignore_index=-1)
-                y_true.extend(y.cpu().tolist())
-                y_pred.extend(torch.max(logits, dim=-1)[1].cpu().tolist())
+                if self.task_type == 'cls':
+                    loss = F.cross_entropy(logits, y, reduction='mean', ignore_index=-1)
+                    y_true.extend(y.cpu().tolist())
+                    y_pred.extend(torch.max(logits, dim=-1)[1].cpu().tolist())
+                else:
+                    loss = self.ce_loss(logits, y, reduction='mean')
+                    y_true.extend(y.cpu().tolist())
+                    y_pred.extend(logits.cpu().tolist())
                 y_logits.append(logits.cpu().numpy())
                 total_loss += loss.item() * num_batch
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
         y_logits = np.concatenate(y_logits)
-        top1 = accuracy_score(y_true, y_pred)
-        balanced_top1 = balanced_accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred, average='macro')
-        recall = recall_score(y_true, y_pred, average='macro')
-        F1 = f1_score(y_true, y_pred, average='macro')
 
-        cf_mat = confusion_matrix(y_true, y_pred, normalize='true')
-        self.print_fn('confusion matrix:\n' + np.array_str(cf_mat))
+        if self.task_type == 'cls':
+            top1 = accuracy_score(y_true, y_pred)
+            balanced_top1 = balanced_accuracy_score(y_true, y_pred)
+            precision = precision_score(y_true, y_pred, average="macro")
+            recall = recall_score(y_true, y_pred, average="macro")
+            F1 = f1_score(y_true, y_pred, average="macro")
+            cf_mat = confusion_matrix(y_true, y_pred, normalize="true")
+            self.print_fn("confusion matrix:\n" + np.array_str(cf_mat))
+
+            eval_dict = {
+                eval_dest + "/loss": total_loss / total_num,
+                eval_dest + "/top-1-acc": top1,
+                eval_dest + "/balanced_acc": balanced_top1,
+                eval_dest + "/precision": precision,
+                eval_dest + "/recall": recall,
+                eval_dest + "/F1": F1,
+            }
+        else:
+            mse = mean_squared_error(y_true, y_pred)
+            rmse = mean_squared_error(y_true, y_pred, squared=False)
+            mae = mean_absolute_error(y_true, y_pred)
+            mape = mean_absolute_percentage_error(y_true, y_pred)
+            r2 = r2_score(y_true, y_pred)
+            eval_dict = {
+                eval_dest + "/loss": total_loss / total_num,
+                eval_dest + "/mse": mse,
+                eval_dest + "/rmse": rmse,
+                eval_dest + "/mae": mae,
+                eval_dest + "/mape": mape,
+                eval_dest + "/r2": r2
+            }
+
         self.ema.restore()
         self.model.train()
 
-        eval_dict = {eval_dest+'/loss': total_loss / total_num, eval_dest+'/top-1-acc': top1, 
-                     eval_dest+'/balanced_acc': balanced_top1, eval_dest+'/precision': precision, eval_dest+'/recall': recall, eval_dest+'/F1': F1}
         if return_logits:
-            eval_dict[eval_dest+'/logits'] = y_logits
+            eval_dict[eval_dest + "/logits"] = y_logits
         return eval_dict
-
 
     def get_save_dict(self):
         """
-        make easier for saving model when need save additional arguments
+        Create a dictionary of additional arguments to save for when saving the model.
         """
-        # base arguments for all models
+        # Base arguments for all models
         save_dict = {
-            'model': self.model.state_dict(),
-            'ema_model': self.ema_model.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
-            'loss_scaler': self.loss_scaler.state_dict(),
-            'it': self.it + 1,
-            'epoch': self.epoch + 1,
-            'best_it': self.best_it,
-            'best_eval_acc': self.best_eval_acc,
+            "model": self.model.state_dict(),
+            "ema_model": self.ema_model.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "loss_scaler": self.loss_scaler.state_dict(),
+            "it": self.it + 1,
+            "epoch": self.epoch + 1,
+            "best_it": self.best_it,
         }
+        if self.task_type == 'cls':
+            save_dict['best_eval_acc'] = self.best_eval_metric
+        else:
+            save_dict['best_eval_mse'] = self.best_eval_metric
         if self.scheduler is not None:
-            save_dict['scheduler'] = self.scheduler.state_dict()
+            # Using a scheduler, so save its state dict
+            save_dict["scheduler"] = self.scheduler.state_dict()
+
+        if hasattr(self, "aim_run_hash"):
+            # Using Aim, so save the run hash so that tracking can be resumed
+            save_dict["aim_run_hash"] = self.aim_run_hash
+
         return save_dict
-    
 
     def save_model(self, save_name, save_path):
         """
@@ -413,24 +502,35 @@ class AlgorithmBase:
         torch.save(save_dict, save_filename)
         self.print_fn(f"model saved: {save_filename}")
 
-
     def load_model(self, load_path):
         """
-        load model and specified parameters for resume
+        Load a model and the necessary parameters for resuming training.
         """
-        checkpoint = torch.load(load_path, map_location='cpu')
-        self.model.load_state_dict(checkpoint['model'])
-        self.ema_model.load_state_dict(checkpoint['ema_model'])
-        self.loss_scaler.load_state_dict(checkpoint['loss_scaler'])
-        self.it = checkpoint['it']
-        self.start_epoch = checkpoint['epoch']
+        checkpoint = torch.load(load_path, map_location="cpu")
+
+        self.model.load_state_dict(checkpoint["model"])
+        self.ema_model.load_state_dict(checkpoint["ema_model"])
+        self.loss_scaler.load_state_dict(checkpoint["loss_scaler"])
+        self.it = checkpoint["it"]
+        self.start_epoch = checkpoint["epoch"]
         self.epoch = self.start_epoch
-        self.best_it = checkpoint['best_it']
-        self.best_eval_acc = checkpoint['best_eval_acc']
-        self.optimizer.load_state_dict(checkpoint['optimizer'])
-        if self.scheduler is not None and 'scheduler' in checkpoint:
-            self.scheduler.load_state_dict(checkpoint['scheduler'])
-        self.print_fn('Model loaded')
+        self.best_it = checkpoint["best_it"]
+        if self.task_type == 'cls':
+            self.best_eval_metric = checkpoint['best_eval_acc']
+        else:
+            self.best_eval_metric = checkpoint['best_eval_mse']
+        self.optimizer.load_state_dict(checkpoint["optimizer"])
+
+        if self.scheduler is not None and "scheduler" in checkpoint:
+            # Using a scheduler, so load its state dict
+            self.scheduler.load_state_dict(checkpoint["scheduler"])
+
+        if "aim_run_hash" in checkpoint:
+            # Using Aim, so load the run hash so that tracking can be resumed
+            self.aim_run_hash = checkpoint["aim_run_hash"]
+
+        self.print_fn("Model loaded")
+
         return checkpoint
 
     def check_prefix_state_dict(self, state_dict):
@@ -482,8 +582,6 @@ class AlgorithmBase:
         self.hooks_dict = OrderedDict()
         for hook in self._hooks:
             self.hooks_dict[hook.name] = hook
-        
-
 
     def call_hook(self, fn_name, hook_name=None, *args, **kwargs):
         """Call all hooks.
@@ -507,14 +605,12 @@ class AlgorithmBase:
         """
         return hook_name in self.hooks_dict
 
-
     @staticmethod
     def get_argument():
         """
         Get specificed arguments into argparse for each algorithm
         """
         return {}
-
 
 
 class ImbAlgorithmBase(AlgorithmBase):
@@ -539,6 +635,13 @@ class ImbAlgorithmBase(AlgorithmBase):
             return super().set_optimizer() 
         else:
             self.print_fn("Create optimizer and scheduler")
-            optimizer = get_optimizer(self.model, self.args.optim, self.args.lr, self.args.momentum, self.args.weight_decay, self.args.layer_decay, bn_wd_skip=False)
+            optimizer = get_optimizer(
+                self.model,
+                self.args.optim,
+                self.args.lr,
+                self.args.momentum,
+                self.args.weight_decay,
+                self.args.layer_decay,
+                bn_wd_skip=False,
+            )
             scheduler = None
-            return optimizer, scheduler

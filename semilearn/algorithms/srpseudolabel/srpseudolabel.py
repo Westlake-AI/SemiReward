@@ -7,12 +7,14 @@ from semilearn.core import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS
 from semilearn.algorithms.hooks import PseudoLabelingHook, FixedThresholdingHook
 from semilearn.algorithms.utils import SSL_Argument,str2bool
-from semilearn.algorithms.semireward.main import Rewarder,Generator,EMARewarder,cosine_similarity_n,add_gaussian_noise
+from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n, add_gaussian_noise
+
 
 @ALGORITHMS.register('srpseudolabel')
 class PseudoLabel(AlgorithmBase):
     """
-        SRPseudoLabel algorithm (https://arxiv.org/abs/2310.03013).
+        Pseudo Label algorithm (https://arxiv.org/abs/1908.02983).
+        SemiReward algorithm (https://arxiv.org/abs/2310.03013).
 
         Args:
         - args (`argparse`):
@@ -33,7 +35,7 @@ class PseudoLabel(AlgorithmBase):
         super().__init__(args, net_builder, tb_log, logger, **kwargs)
         self.init(p_cutoff=args.p_cutoff, unsup_warm_up=args.unsup_warm_up)
         self.task_type = args.task_type
-        self.N_k=args.N_k
+        self.N_k = args.N_k
         self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
         self.generator = Generator(args.feature_dim).cuda (device=args.gpu)
         
@@ -43,6 +45,7 @@ class PseudoLabel(AlgorithmBase):
         self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=args.sr_lr)
 
         self.criterion = torch.nn.MSELoss()
+
     def init(self, p_cutoff, unsup_warm_up=0.4):
         self.p_cutoff = p_cutoff
         self.unsup_warm_up = unsup_warm_up 

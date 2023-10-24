@@ -1,15 +1,20 @@
 # Change Log
 
+## SemiReward Update
+
+* [10/18/2023] SemiReward==0.1.0 has been released with is based on semilearn==0.3.1.
+* Update config files for SemiReward based on Pseudo-Labeling, FlexMatch, SoftMatch, and FreeMatch.
+* Update regression datasets, losses, evaluation hooks.
+
+## 23/07/15/2023 USB Update
+
+* Added DeFixmatch algorithm.
 * Change the frequency of Tensorboard logging to every `num_log_iter` iterations.
 * Aim tracking now resumes tracking the same run when resuming training.
 * Simplified and improved the flexibility of the dependencies.
 * Fixes hard-coded repository path for Aim experiment tracking.
 
-## 23/07/15/2023 Update
-
-* Added DeFixmatch algorithm.
-
-## 23/01/2023 Update
+## 23/01/2023 USB Update
 
 * Added imbalanced Semi-Supervised setting and 8 imbalanced algorithms.
 * Added FreeMatch and SoftMatch algorithms.

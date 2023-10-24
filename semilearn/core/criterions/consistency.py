@@ -28,6 +28,8 @@ def consistency_loss(logits, targets, name='ce', mask=None):
         probs = torch.softmax(logits, dim=-1)
         loss = F.mse_loss(probs, targets, reduction='none').mean(dim=1)
     elif name == 'l1':
+        if logits.shape != targets.shape:
+            targets = targets.view(logits.shape)
         loss = F.l1_loss(logits, targets, reduction='none').mean(dim=1)
     else:
         loss = ce_loss(logits, targets, reduction='none')

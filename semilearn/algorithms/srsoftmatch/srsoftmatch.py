@@ -8,12 +8,14 @@ from semilearn.core.algorithmbase import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS
 from semilearn.algorithms.hooks import PseudoLabelingHook, DistAlignEMAHook
 from semilearn.algorithms.utils import SSL_Argument, str2bool
-from semilearn.algorithms.semireward.main import Rewarder,Generator,EMARewarder,cosine_similarity_n
+from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n
+
 
 @ALGORITHMS.register('srsoftmatch')
 class SoftMatch(AlgorithmBase):
     """
-        SRSoftMatch algorithm (https://arxiv.org/abs/2310.03013). 
+        SoftMatch algorithm (https://openreview.net/forum?id=ymt1zQXBDiF&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2023%2FConference%2FAuthors%23your-submissions)).
+        SemiReward algorithm (https://arxiv.org/abs/2310.03013).
 
         Args:
             - args (`argparse`):
@@ -44,6 +46,7 @@ class SoftMatch(AlgorithmBase):
         self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=args.sr_lr)
 
         self.criterion = torch.nn.MSELoss()
+
     def init(self, T, hard_label=True, dist_align=True, dist_uniform=True, ema_p=0.999, n_sigma=2, per_class=False):
         self.T = T
         self.use_hard_label = hard_label

@@ -1,6 +1,7 @@
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+
 import os
 import torch
 import numpy as np
@@ -9,11 +10,14 @@ from semilearn.core import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS
 from semilearn.algorithms.hooks import PseudoLabelingHook
 from semilearn.algorithms.utils import SSL_Argument, str2bool
-from semilearn.algorithms.semireward.main import Rewarder,Generator,EMARewarder,cosine_similarity_n
+from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n
+
+
 @ALGORITHMS.register('srflexmatch')
 class FlexMatch(AlgorithmBase):
     """
-        SRFlexMatch algorithm (https://arxiv.org/abs/2310.03013).
+        FlexMatch algorithm (https://arxiv.org/abs/2110.08263).
+        SemiReward algorithm (https://arxiv.org/abs/2310.03013).
 
         Args:
             - args (`argparse`):
@@ -42,7 +46,7 @@ class FlexMatch(AlgorithmBase):
         super().__init__(args, net_builder, tb_log, logger) 
         # flexmatch specified arguments
         self.init(T=args.T, p_cutoff=args.p_cutoff, hard_label=args.hard_label, thresh_warmup=args.thresh_warmup)
-        self.N_k=args.N_k
+        self.N_k = args.N_k
         self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
         self.generator = Generator(args.feature_dim).cuda (device=args.gpu)
         
@@ -52,6 +56,7 @@ class FlexMatch(AlgorithmBase):
         self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=args.sr_lr)
 
         self.criterion = torch.nn.MSELoss()
+
     def init(self, T, p_cutoff, hard_label=True, thresh_warmup=True):
         self.T = T
         self.p_cutoff = p_cutoff

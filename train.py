@@ -88,6 +88,18 @@ def get_config():
     parser.add_argument("--ulb_loss_ratio", type=float, default=1.0)
 
     """
+    Training Configuration of SemiReward
+    """
+    parser.add_argument(
+        "--start_timing", type=int, default=20000, help="starting time of rewarder stage-2 training"
+    )
+    parser.add_argument("--feature_dim", type=int, default=256, help="rewarder feature dim")
+    parser.add_argument("--sr_lr", type=float, default=1e-3, help="rewarder learning rate")
+    parser.add_argument("--N_k", type=int, default=10, help="rewarder training interval")
+    parser.add_argument("--sr_ema", type=str2bool, default=False, help="whether to use ema rewarder")
+    parser.add_argument("--sr_ema_m", type=float, default=0.999, help="rewarder ema momentum")
+
+    """
     Optimizer configurations
     """
     parser.add_argument("--optim", type=str, default="SGD")

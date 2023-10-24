@@ -6,7 +6,8 @@ from semilearn.core import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS
 from semilearn.algorithms.hooks import PseudoLabelingHook
 from semilearn.algorithms.utils import SSL_Argument, str2bool
-from semilearn.algorithms.semireward.main import Rewarder,Generator,EMARewarder,cosine_similarity_n
+from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n
+
 
 # TODO: move these to .utils or algorithms.utils.loss
 def replace_inf_to_zero(val):
@@ -46,14 +47,15 @@ def entropy_loss(mask, logits_s, prob_model, label_hist):
 
 @ALGORITHMS.register('srfreematch')
 class FreeMatch(AlgorithmBase):
-    """""
-    SRFreeMatch algorithm (https://arxiv.org/abs/2310.03013).
-    """""
+    """
+        FreeMatch algorithm (https://arxiv.org/abs/2205.07246).
+        SemiReward algorithm (https://arxiv.org/abs/2310.03013).
+    """
     def __init__(self, args, net_builder, tb_log=None, logger=None):
         super().__init__(args, net_builder, tb_log, logger) 
         self.init(T=args.T, hard_label=args.hard_label, ema_p=args.ema_p, use_quantile=args.use_quantile, clip_thresh=args.clip_thresh)
         self.lambda_e = args.ent_loss_ratio
-        self.N_k=args.N_k
+        self.N_k = args.N_k
         self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
         self.generator = Generator(args.feature_dim).cuda (device=args.gpu)
         
@@ -63,6 +65,7 @@ class FreeMatch(AlgorithmBase):
         self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=args.sr_lr)
 
         self.criterion = torch.nn.MSELoss()
+
     def init(self, T, hard_label=True, ema_p=0.999, use_quantile=True, clip_thresh=False):
         self.T = T
         self.use_hard_label = hard_label

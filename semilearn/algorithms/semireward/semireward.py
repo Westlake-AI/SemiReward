@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Generator(nn.Module):
-    def __init__(self, feature_dim):
+    def __init__(self, feature_dim=384):
         super(Generator, self).__init__()
         self.fc_layers = nn.Sequential(
             nn.Linear(feature_dim, 256),
@@ -20,8 +21,9 @@ class Generator(nn.Module):
         x = F.relu(x)
         return x
 
+
 class Rewarder(nn.Module):
-    def __init__(self, label_embedding_dim, feature_dim):
+    def __init__(self, label_embedding_dim, feature_dim=384):
         super(Rewarder, self).__init__()
 
         # Feature Processing Part
@@ -68,8 +70,9 @@ class Rewarder(nn.Module):
         
         return reward
 
+
 class EMARewarder(nn.Module):
-    def __init__(self, label_embedding_dim, feature_dim,ema_decay=0.9):
+    def __init__(self, label_embedding_dim, feature_dim=384, ema_decay=0.9):
         super(EMARewarder, self).__init__()
 
         # Feature Processing Part
@@ -140,10 +143,12 @@ class EMARewarder(nn.Module):
 
         return reward
 
+
 def cosine_similarity_n(x, y):
     cosine_similarity = torch.cosine_similarity(x, y,dim=-1)
-    normalized_similarity = (cosine_similarity+1)/2 
+    normalized_similarity = (cosine_similarity+1) / 2 
     return normalized_similarity
+
 
 def add_gaussian_noise(tensor, mean=0, std=1):
     noise = torch.randn_like(tensor) * std + mean
