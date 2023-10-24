@@ -13,7 +13,7 @@ from semilearn.algorithms.semireward.main import Rewarder,Generator,EMARewarder,
 @ALGORITHMS.register('srsoftmatch')
 class SoftMatch(AlgorithmBase):
     """
-        SoftMatch algorithm (https://openreview.net/forum?id=ymt1zQXBDiF&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2023%2FConference%2FAuthors%23your-submissions)).
+        SRSoftMatch algorithm (https://arxiv.org/abs/2310.03013). 
 
         Args:
             - args (`argparse`):

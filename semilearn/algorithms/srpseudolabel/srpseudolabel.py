@@ -12,7 +12,7 @@ from semilearn.algorithms.semireward.main import Rewarder,Generator,EMARewarder,
 @ALGORITHMS.register('srpseudolabel')
 class PseudoLabel(AlgorithmBase):
     """
-        Pseudo Label algorithm (https://arxiv.org/abs/1908.02983).
+        SRPseudoLabel algorithm (https://arxiv.org/abs/2310.03013).
 
         Args:
         - args (`argparse`):

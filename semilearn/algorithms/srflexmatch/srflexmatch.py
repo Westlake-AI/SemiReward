@@ -13,7 +13,7 @@ from semilearn.algorithms.semireward.main import Rewarder,Generator,EMARewarder,
 @ALGORITHMS.register('srflexmatch')
 class FlexMatch(AlgorithmBase):
     """
-        FlexMatch algorithm (https://arxiv.org/abs/2110.08263).
+        SRFlexMatch algorithm (https://arxiv.org/abs/2310.03013).
 
         Args:
             - args (`argparse`):

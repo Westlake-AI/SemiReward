@@ -46,6 +46,9 @@ def entropy_loss(mask, logits_s, prob_model, label_hist):
 
 @ALGORITHMS.register('srfreematch')
 class FreeMatch(AlgorithmBase):
+    """""
+    SRFreeMatch algorithm (https://arxiv.org/abs/2310.03013).
+    """""
     def __init__(self, args, net_builder, tb_log=None, logger=None):
         super().__init__(args, net_builder, tb_log, logger) 
         self.init(T=args.T, hard_label=args.hard_label, ema_p=args.ema_p, use_quantile=args.use_quantile, clip_thresh=args.clip_thresh)
