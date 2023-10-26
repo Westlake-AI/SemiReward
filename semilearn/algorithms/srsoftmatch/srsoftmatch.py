@@ -56,6 +56,48 @@ class SoftMatch(AlgorithmBase):
         self.n_sigma = n_sigma
         self.per_class = per_class
 
+    def data_generator(self, x_lb, y_lb, x_ulb_w, x_ulb_s, rewarder,gpu):
+        gpu = gpu
+        rewarder = rewarder.eval()
+        unsup_losss = None
+        rewards = None
+        for _ in range(self.sr_decay()):  
+            num_lb = y_lb.shape[0]
+            with self.amp_cm():
+                if self.use_cat:
+                    inputs = torch.cat((x_lb, x_ulb_w, x_ulb_s))
+                    outputs = self.model(inputs)
+                    logits_x_ulb_w, logits_x_ulb_s = outputs['logits'][num_lb:].chunk(2)
+                    feats_x_ulb_w, feats_x_ulb_s = outputs['feat'][num_lb:].chunk(2)
+                else:
+                    outs_x_ulb_s = self.model(x_ulb_s)
+                    logits_x_ulb_s = outs_x_ulb_s['logits']
+                    feats_x_ulb_s = outs_x_ulb_s['feat']
+                    with torch.no_grad():
+                        outs_x_ulb_w = self.model(x_ulb_w)
+                        logits_x_ulb_w = outs_x_ulb_w['logits']
+                        feats_x_ulb_w = outs_x_ulb_w['feat']
+
+                probs_x_ulb_w = self.compute_prob(logits_x_ulb_w.detach())
+            pseudo_label = self.call_hook("gen_ulb_targets", "PseudoLabelingHook",
+                                      logits=probs_x_ulb_w,
+                                      use_hard_label=self.use_hard_label,
+                                      T=self.T,
+                                      softmax=False)
+            mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=probs_x_ulb_w, softmax_x_ulb=False)
+            reward = rewarder(feats_x_ulb_w, pseudo_label)
+            reward = reward.mean()
+            unsup_loss = self.consistency_loss(logits_x_ulb_s, pseudo_label,'ce', mask=mask)
+
+            rewards = torch.cat((rewards, reward.unsqueeze(0))) if rewards is not None else reward.unsqueeze(0)
+            unsup_losss = torch.cat((unsup_losss, unsup_loss.unsqueeze(0))) if unsup_losss is not None else unsup_loss.unsqueeze(0)
+        avg_rewards = rewards.mean()
+        mask = torch.where(rewards > avg_rewards, torch.tensor(1).cuda(gpu), torch.tensor(0).cuda(gpu))
+        unsup_loss = unsup_loss * mask
+        unsup_loss = unsup_loss.mean()
+
+        yield unsup_loss
+
     def set_hooks(self):
         self.register_hook(PseudoLabelingHook(), "PseudoLabelingHook")
         self.register_hook(
@@ -110,7 +152,7 @@ class SoftMatch(AlgorithmBase):
                                           T=self.T)
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                for unsup_loss in self.data_generator(x_lb, y_lb,idx_ulb, x_ulb_w, x_ulb_s,rewarder,self.gpu):
+                for unsup_loss in self.data_generator(x_lb, y_lb, x_ulb_w, x_ulb_s,rewarder,self.gpu):
                     unsup_loss = unsup_loss
             else:
                 pseudo_label = pseudo_label
