@@ -222,4 +222,10 @@ class SoftMatch(AlgorithmBase):
             SSL_Argument('--ema_p', float, 0.999),
             SSL_Argument('--n_sigma', int, 2),
             SSL_Argument('--per_class', str2bool, False),
+            SSL_Argument('--start_timing', int,20000),
+            SSL_Argument('--feature_dim', int,384),
+            SSL_Argument('--sr_lr', float, 0.0005),
+            SSL_Argument('--N_k', int, 10),
+            SSL_Argument('--sr_ema', str2bool, True),
+            SSL_Argument('--sr_ema_m', float, 0.999),
         ]
