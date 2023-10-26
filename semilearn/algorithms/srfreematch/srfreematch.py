@@ -73,7 +73,7 @@ class FreeMatch(AlgorithmBase):
         self.use_quantile = use_quantile
         self.clip_thresh = clip_thresh
 
-    def data_generator(self, x_lb, y_lb, idx_ulb, x_ulb_w, x_ulb_s, rewarder,gpu):
+    def data_generator(self, x_lb, y_lb, x_ulb_w, x_ulb_s, rewarder,gpu):
         gpu = gpu
         rewarder = rewarder.eval()
         unsup_losss = None
@@ -101,7 +101,7 @@ class FreeMatch(AlgorithmBase):
                                       use_hard_label=self.use_hard_label,
                                       T=self.T,
                                       softmax=False)
-            mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=probs_x_ulb_w, softmax_x_ulb=False, idx_ulb=idx_ulb)
+            mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=probs_x_ulb_w, softmax_x_ulb=False)
             reward = rewarder(feats_x_ulb_w, pseudo_label)
             reward = reward.mean()
             unsup_loss = self.consistency_loss(logits_x_ulb_s, pseudo_label,'ce', mask=mask)
@@ -160,7 +160,7 @@ class FreeMatch(AlgorithmBase):
                                           T=self.T)
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                for unsup_loss in self.data_generator(x_lb, y_lb,idx_ulb, x_ulb_w, x_ulb_s,rewarder,self.gpu):
+                for unsup_loss in self.data_generator(x_lb, y_lb, x_ulb_w, x_ulb_s,rewarder,self.gpu):
                     unsup_loss = unsup_loss
             else:
                 pseudo_label = pseudo_label
@@ -271,6 +271,8 @@ class FreeMatch(AlgorithmBase):
             SSL_Argument('--T', float, 0.5),
             SSL_Argument('--p_cutoff', float, 0.95),
             SSL_Argument('--thresh_warmup', str2bool, True),
+            SSL_Argument('--use_quantile', str2bool, False),
+            SSL_Argument('--clip_thresh', str2bool, False),
             SSL_Argument('--start_timing', int,20000),
             SSL_Argument('--feature_dim', int,384),
             SSL_Argument('--sr_lr', float, 0.0005),

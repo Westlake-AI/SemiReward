@@ -87,7 +87,7 @@ class PseudoLabel(AlgorithmBase):
                 pseudo_label = self.call_hook("gen_ulb_targets", "PseudoLabelingHook", 
                                           logits=logits_x_ulb if self.task_type == 'cls' else outs_x_ulb_pseudo,
                                           use_hard_label=True)
-            reward = rewarder(feats_x_ulb_w, pseudo_label)
+            reward = rewarder(feats_x_ulb, pseudo_label)
             reward = reward.mean()
             unsup_loss = self.consistency_loss(logits_x_ulb, pseudo_label,
                                                name='ce' if self.task_type == 'cls' else 'l1',

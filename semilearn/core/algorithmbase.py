@@ -87,14 +87,6 @@ class AlgorithmBase:
         self.resume = args.resume
         self.algorithm = args.algorithm
 
-        # sr arguments   
-        self.start_timing = args.start_timing
-        self.feature_dim = args.feature_dim
-        self.sr_lr = args.sr_lr
-        self.N_k = args.N_k
-        self.sr_ema = args.sr_ema
-        self.sr_ema_m = args.sr_ema_m
-
         # commaon utils arguments
         self.tb_log = tb_log
         self.print_fn = print if logger is None else logger.info

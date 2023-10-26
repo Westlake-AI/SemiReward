@@ -90,6 +90,8 @@ def get_config():
     """
     Training Configuration of SemiReward
     """
+    
+    """
     parser.add_argument(
         "--start_timing", type=int, default=20000, help="starting time of rewarder stage-2 training"
     )
@@ -98,6 +100,7 @@ def get_config():
     parser.add_argument("--N_k", type=int, default=10, help="rewarder training interval")
     parser.add_argument("--sr_ema", type=str2bool, default=False, help="whether to use ema rewarder")
     parser.add_argument("--sr_ema_m", type=float, default=0.999, help="rewarder ema momentum")
+    """
 
     """
     Optimizer configurations
