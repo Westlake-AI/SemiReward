@@ -104,7 +104,7 @@ def get_config():
 
     """
     Optimizer configurations
-    """
+    """ 
     parser.add_argument("--optim", type=str, default="SGD")
     parser.add_argument("--lr", type=float, default=3e-2)
     parser.add_argument("--momentum", type=float, default=0.9)
@@ -274,7 +274,21 @@ def main(args):
     For (Distributed)DataParallelism,
     main(args) spawn each process (main_worker) to each GPU.
     """
+    if args.sr_lr is not None:
+        print("SemiReward is Starting")
+    else:
+        print("Baseline is Starting")
+        from semilearn.algorithms.utils import str2bool
 
+        parser = argparse.ArgumentParser(description="Semi-Supervised Learning (USB)")
+        parser.add_argument(
+        "--start_timing", type=int, default=20000, help="starting time of rewarder stage-2 training"
+    )
+        parser.add_argument("--feature_dim", type=int, default=256, help="rewarder feature dim")
+        parser.add_argument("--sr_lr", type=float, default=1e-3, help="rewarder learning rate")
+        parser.add_argument("--N_k", type=int, default=10, help="rewarder training interval")
+        parser.add_argument("--sr_ema", type=str2bool, default=False, help="whether to use ema rewarder")
+        parser.add_argument("--sr_ema_m", type=float, default=0.999, help="rewarder ema momentum")    
     assert (
         args.num_train_iter % args.epoch == 0
     ), f"# total training iter. {args.num_train_iter} is not divisible by # epochs {args.epoch}"  # noqa: E501
@@ -329,8 +343,7 @@ def main(args):
         # args=(,) means the arguments of main_worker
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
     else:
-        main_worker(args.gpu, ngpus_per_node, args)
-
+        main_worker(args.gpu, ngpus_per_node, args)   
 
 def main_worker(gpu, ngpus_per_node, args):
     """
