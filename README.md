@@ -200,6 +200,8 @@ You can change hyperparameters for SemiReward by configurations (.yaml files) li
 semilearn/algorithms/srflexmatch/srflexmatch.py
 ```
 
+**Tips:** For users in some areas of China, huggingface region locking occurs, so local pre-training weights need to be used when using the Bert and huBert models. Take the Bert model as an example, you need to focus on `./semilearn/datasets/collactors/nlp_collactor.py`, find line 102 to change it's address into your local folder for Bert. Also, in file `./semilearn/nets/bert/bert.py` line 13, it need to the same way to adjust.
+
 ### Evaluation
 
 After training, you can check the evaluation performance on training logs, or running evaluation script:
