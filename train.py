@@ -274,7 +274,7 @@ def main(args):
     For (Distributed)DataParallelism,
     main(args) spawn each process (main_worker) to each GPU.
     """
-    if args.sr_lr is not None:
+    if args.__contains__('sr_lr'):
         print("SemiReward is Starting")
     else:
         print("Baseline is Starting")
