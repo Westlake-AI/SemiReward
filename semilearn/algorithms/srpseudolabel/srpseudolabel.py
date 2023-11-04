@@ -138,7 +138,7 @@ class PseudoLabel(AlgorithmBase):
 
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                for unsup_loss in self.data_generator(self, x_lb, x_ulb_w, rewarder,self.gpu):
+                for unsup_loss in self.data_generator(x_lb, x_ulb_w, rewarder,self.gpu):
                     unsup_loss = unsup_loss
             else:
                 pseudo_label = pseudo_label
