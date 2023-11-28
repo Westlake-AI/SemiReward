@@ -100,7 +100,7 @@ class PseudoLabel(AlgorithmBase):
         unsup_loss = unsup_loss * mask
         unsup_loss = unsup_loss.mean()
 
-        yield unsup_loss
+        return unsup_loss
 
     def train_step(self, x_lb, y_lb, x_ulb_w):
         # inference and calculate sup/unsup losses
@@ -141,7 +141,6 @@ class PseudoLabel(AlgorithmBase):
                 for unsup_loss in self.data_generator(x_lb, x_ulb_w, rewarder,self.gpu):
                     unsup_loss = unsup_loss
             else:
-                pseudo_label = pseudo_label
                 unsup_loss = self.consistency_loss(logits_x_ulb, pseudo_label,
                                                name='ce' if self.task_type == 'cls' else 'l1',
                                                mask=mask)
