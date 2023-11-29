@@ -13,7 +13,7 @@ from semilearn.algorithms.utils import SSL_Argument, str2bool
 @ALGORITHMS.register('softmatch')
 class SoftMatch(AlgorithmBase):
     """
-        SoftMatch algorithm (https://openreview.net/forum?id=ymt1zQXBDiF&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2023%2FConference%2FAuthors%23your-submissions)).
+        SoftMatch algorithm (https://arxiv.org/abs/2301.10921)).
 
         Args:
             - args (`argparse`):

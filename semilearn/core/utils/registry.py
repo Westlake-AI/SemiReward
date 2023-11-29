@@ -64,7 +64,7 @@ def _handle_errors(errors):
 
 ALL_MODULES = [
     # NOTE: add all algorithms here
-    ('semilearn.algorithms', ['adamatch', 'comatch', 'crmatch', 'dash', 'fixmatch', 'flexmatch','srflexmatch','fullysupervised', 'meanteacher',
+    ('semilearn.algorithms', ['adamatch', 'comatch', 'crmatch', 'dash', 'fixmatch', 'srfixmatch', 'flexmatch','srflexmatch','fullysupervised', 'meanteacher',
                               'mixmatch', 'pimodel', 'pseudolabel','srpseudolabel',  'remixmatch', 'simmatch', 'uda', 'vat', 'softmatch','srsoftmatch','srfreematch', 'freematch']),
     ('semilearn.imb_algorithms', ['abc', 'cossl', 'adsh', 'crest', 'darp', 'daso', 'debiaspl', 'saw', 'tras'])
 ]

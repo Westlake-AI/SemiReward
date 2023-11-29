@@ -12,9 +12,9 @@ from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, co
 
 
 @ALGORITHMS.register('srsoftmatch')
-class SoftMatch(AlgorithmBase):
+class SRSoftMatch(AlgorithmBase):
     """
-        SoftMatch algorithm (https://openreview.net/forum?id=ymt1zQXBDiF&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2023%2FConference%2FAuthors%23your-submissions)).
+        SoftMatch algorithm (https://arxiv.org/abs/2301.10921)).
         SemiReward algorithm (https://arxiv.org/abs/2310.03013).
 
         Args:
@@ -35,9 +35,11 @@ class SoftMatch(AlgorithmBase):
         """
     def __init__(self, args, net_builder, tb_log=None, logger=None):
         super().__init__(args, net_builder, tb_log, logger) 
-        self.init(T=args.T, hard_label=args.hard_label, dist_align=args.dist_align, dist_uniform=args.dist_uniform, ema_p=args.ema_p, n_sigma=args.n_sigma, per_class=args.per_class)
+        self.init(T=args.T, hard_label=args.hard_label, dist_align=args.dist_align, dist_uniform=args.dist_uniform,
+                  ema_p=args.ema_p, n_sigma=args.n_sigma, per_class=args.per_class)
         self.N_k=args.N_k
-        self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
+        self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 \
+                         else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
         self.generator = Generator(args.feature_dim).cuda (device=args.gpu)
         
         self.start_timing = args.start_timing
@@ -100,10 +102,12 @@ class SoftMatch(AlgorithmBase):
 
     def set_hooks(self):
         self.register_hook(PseudoLabelingHook(), "PseudoLabelingHook")
-        self.register_hook(
-            DistAlignEMAHook(num_classes=self.num_classes, momentum=self.args.ema_p, p_target_type='uniform' if self.args.dist_uniform else 'model'), 
+        self.register_hook(DistAlignEMAHook(
+            num_classes=self.num_classes, momentum=self.args.ema_p, p_target_type='uniform' if self.args.dist_uniform else 'model'), 
             "DistAlignHook")
-        self.register_hook(SoftMatchWeightingHook(num_classes=self.num_classes, n_sigma=self.args.n_sigma, momentum=self.args.ema_p, per_class=self.args.per_class), "MaskingHook")
+        self.register_hook(SoftMatchWeightingHook(
+            num_classes=self.num_classes, n_sigma=self.args.n_sigma, momentum=self.args.ema_p, per_class=self.args.per_class),
+            "MaskingHook")
         super().set_hooks()    
 
     def train_step(self, x_lb, y_lb, x_ulb_w, x_ulb_s):
@@ -131,7 +135,6 @@ class SoftMatch(AlgorithmBase):
                     feats_x_ulb_w = outs_x_ulb_w['feat']
             feat_dict = {'x_lb':feats_x_lb, 'x_ulb_w':feats_x_ulb_w, 'x_ulb_s':feats_x_ulb_s}
 
-
             sup_loss = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
 
             probs_x_lb = torch.softmax(logits_x_lb.detach(), dim=-1)
@@ -150,20 +153,21 @@ class SoftMatch(AlgorithmBase):
                                           logits=logits_x_ulb_w,
                                           use_hard_label=self.use_hard_label,
                                           T=self.T)
+            # SemiReward inference
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                for unsup_loss in self.data_generator(x_lb, y_lb, x_ulb_w, x_ulb_s,rewarder,self.gpu):
-                    unsup_loss = unsup_loss
+                unsup_loss = self.data_generator(x_lb, y_lb, x_ulb_w, x_ulb_s, rewarder, self.gpu)
             else:
                 unsup_loss = self.consistency_loss(logits_x_ulb_s, pseudo_label,'ce', mask=mask)
-            
+
+            # SemiReward training
             if self.it > 0:
-            # Generate pseudo labels using the generator (your pseudo-labeling process)
+                # Generate pseudo labels using the generator (your pseudo-labeling process)
                 self.rewarder.train()
                 self.generator.train()
                 generated_label = self.generator(feats_x_lb).detach()
                 
-            # Convert generated pseudo labels and true labels to tensors
+                # Convert generated pseudo labels and true labels to tensors
                 real_labels_tensor = y_lb.cuda(self.gpu).view(-1)
                 real_labels_tensor=real_labels_tensor.unsqueeze(0)
 
@@ -217,6 +221,7 @@ class SoftMatch(AlgorithmBase):
 
                     self.generator_optimizer.step()
                     self.rewarder_optimizer.step()
+
             # calculate unlabeled loss
             unsup_loss = self.consistency_loss(logits_x_ulb_s,
                                           pseudo_label,
@@ -224,7 +229,6 @@ class SoftMatch(AlgorithmBase):
                                           mask=mask)
 
             total_loss = sup_loss + self.lambda_u * unsup_loss
-
 
         out_dict = self.process_out_dict(loss=total_loss, feat=feat_dict)
         log_dict = self.process_log_dict(sup_loss=sup_loss.item(), 
@@ -242,7 +246,6 @@ class SoftMatch(AlgorithmBase):
         save_dict['prob_max_mu_t'] = self.hooks_dict['MaskingHook'].prob_max_mu_t.cpu()
         save_dict['prob_max_var_t'] = self.hooks_dict['MaskingHook'].prob_max_var_t.cpu()
         return save_dict
-
 
     def load_model(self, load_path):
         checkpoint = super().load_model(load_path)

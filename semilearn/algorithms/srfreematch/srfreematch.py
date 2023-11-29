@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 
 from semilearn.algorithms.freematch.utils import FreeMatchThresholdingHook
 from semilearn.core import AlgorithmBase
@@ -46,7 +45,7 @@ def entropy_loss(mask, logits_s, prob_model, label_hist):
 
 
 @ALGORITHMS.register('srfreematch')
-class FreeMatch(AlgorithmBase):
+class SRFreeMatch(AlgorithmBase):
     """
         FreeMatch algorithm (https://arxiv.org/abs/2205.07246).
         SemiReward algorithm (https://arxiv.org/abs/2310.03013).
@@ -56,7 +55,8 @@ class FreeMatch(AlgorithmBase):
         self.init(T=args.T, hard_label=args.hard_label, ema_p=args.ema_p, use_quantile=args.use_quantile, clip_thresh=args.clip_thresh)
         self.lambda_e = args.ent_loss_ratio
         self.N_k = args.N_k
-        self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
+        self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 \
+                         else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
         self.generator = Generator(args.feature_dim).cuda (device=args.gpu)
         
         self.start_timing = args.start_timing
@@ -120,7 +120,6 @@ class FreeMatch(AlgorithmBase):
         self.register_hook(FreeMatchThresholdingHook(num_classes=self.num_classes, momentum=self.args.ema_p), "MaskingHook")
         super().set_hooks()
 
-
     def train_step(self, x_lb, y_lb, x_ulb_w, x_ulb_s):
         num_lb = y_lb.shape[0]
 
@@ -146,32 +145,31 @@ class FreeMatch(AlgorithmBase):
                     feats_x_ulb_w = outs_x_ulb_w['feat']
             feat_dict = {'x_lb':feats_x_lb, 'x_ulb_w':feats_x_ulb_w, 'x_ulb_s':feats_x_ulb_s}
 
-
             sup_loss = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
 
             # calculate mask
             mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=logits_x_ulb_w)
-
 
             # generate unlabeled targets using pseudo label hook
             pseudo_label = self.call_hook("gen_ulb_targets", "PseudoLabelingHook", 
                                           logits=logits_x_ulb_w,
                                           use_hard_label=self.use_hard_label,
                                           T=self.T)
+            # SemiReward inference
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                for unsup_loss in self.data_generator(x_lb, y_lb, x_ulb_w, x_ulb_s,rewarder,self.gpu):
-                    unsup_loss = unsup_loss
+                unsup_loss = self.data_generator(x_lb, y_lb, x_ulb_w, x_ulb_s, rewarder, self.gpu)
             else:
                 unsup_loss = self.consistency_loss(logits_x_ulb_s, pseudo_label,'ce', mask=mask)
-            
+
+            # SemiReward training
             if self.it > 0:
-            # Generate pseudo labels using the generator (your pseudo-labeling process)
+                # Generate pseudo labels using the generator (your pseudo-labeling process)
                 self.rewarder.train()
                 self.generator.train()
                 generated_label = self.generator(feats_x_lb).detach()
                 
-            # Convert generated pseudo labels and true labels to tensors
+                # Convert generated pseudo labels and true labels to tensors
                 real_labels_tensor = y_lb.cuda(self.gpu).view(-1)
                 real_labels_tensor=real_labels_tensor.unsqueeze(0)
 
@@ -206,7 +204,7 @@ class FreeMatch(AlgorithmBase):
 
                         self.generator_optimizer.zero_grad()
                         self.rewarder_optimizer.zero_grad()
-                
+
                         generator_loss.backward(retain_graph=True)
                         rewarder_loss.backward(retain_graph=True)
 
@@ -219,18 +217,19 @@ class FreeMatch(AlgorithmBase):
 
                     self.generator_optimizer.zero_grad()
                     self.rewarder_optimizer.zero_grad()
-                
+
                     generator_loss.backward(retain_graph=True)
                     rewarder_loss.backward(retain_graph=True)
 
                     self.generator_optimizer.step()
                     self.rewarder_optimizer.step()
+
             # calculate unlabeled loss
             unsup_loss = self.consistency_loss(logits_x_ulb_s,
                                           pseudo_label,
                                           'ce',
                                           mask=mask)
-            
+
             # calculate entropy loss
             if mask.sum() > 0:
                ent_loss, _ = entropy_loss(mask, logits_x_ulb_s, self.p_model, self.label_hist)
@@ -253,7 +252,6 @@ class FreeMatch(AlgorithmBase):
         save_dict['time_p'] = self.hooks_dict['MaskingHook'].time_p.cpu()
         save_dict['label_hist'] = self.hooks_dict['MaskingHook'].label_hist.cpu()
         return save_dict
-
 
     def load_model(self, load_path):
         checkpoint = super().load_model(load_path)

@@ -14,7 +14,7 @@ from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, co
 
 
 @ALGORITHMS.register('srflexmatch')
-class FlexMatch(AlgorithmBase):
+class SRFlexMatch(AlgorithmBase):
     """
         FlexMatch algorithm (https://arxiv.org/abs/2110.08263).
         SemiReward algorithm (https://arxiv.org/abs/2310.03013).
@@ -47,7 +47,8 @@ class FlexMatch(AlgorithmBase):
         # flexmatch specified arguments
         self.init(T=args.T, p_cutoff=args.p_cutoff, hard_label=args.hard_label, thresh_warmup=args.thresh_warmup)
         self.N_k = args.N_k
-        self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
+        self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 \
+                         else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
         self.generator = Generator(args.feature_dim).cuda (device=args.gpu)
         
         self.start_timing = args.start_timing
@@ -65,7 +66,8 @@ class FlexMatch(AlgorithmBase):
 
     def set_hooks(self):
         self.register_hook(PseudoLabelingHook(), "PseudoLabelingHook")
-        self.register_hook(FlexMatchThresholdingHook(ulb_dest_len=self.args.ulb_dest_len, num_classes=self.num_classes, thresh_warmup=self.args.thresh_warmup), "MaskingHook")
+        self.register_hook(FlexMatchThresholdingHook(
+            ulb_dest_len=self.args.ulb_dest_len, num_classes=self.num_classes, thresh_warmup=self.args.thresh_warmup), "MaskingHook")
         super().set_hooks()
 
     def data_generator(self, x_lb, y_lb, idx_ulb, x_ulb_w, x_ulb_s, rewarder,gpu):
@@ -110,7 +112,6 @@ class FlexMatch(AlgorithmBase):
 
         return unsup_loss
 
-
     def train_step(self, x_lb, y_lb, idx_ulb, x_ulb_w, x_ulb_s):
         num_lb = y_lb.shape[0]
 
@@ -151,20 +152,21 @@ class FlexMatch(AlgorithmBase):
                                           use_hard_label=self.use_hard_label,
                                           T=self.T,
                                           softmax=False)
+            # SemiReward inference
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                for unsup_loss in self.data_generator(x_lb, y_lb,idx_ulb, x_ulb_w, x_ulb_s,rewarder,self.gpu):
-                    unsup_loss = unsup_loss
+                unsup_loss = self.data_generator(x_lb, y_lb, idx_ulb, x_ulb_w, x_ulb_s, rewarder, self.gpu)
             else:
                 unsup_loss = self.consistency_loss(logits_x_ulb_s, pseudo_label,'ce', mask=mask)
-            
+
+            # SemiReward training
             if self.it > 0:
-            # Generate pseudo labels using the generator (your pseudo-labeling process)
+                # Generate pseudo labels using the generator (your pseudo-labeling process)
                 self.rewarder.train()
                 self.generator.train()
                 generated_label = self.generator(feats_x_lb).detach()
-                
-            # Convert generated pseudo labels and true labels to tensors
+
+                # Convert generated pseudo labels and true labels to tensors
                 real_labels_tensor = y_lb.cuda(self.gpu).view(-1)
                 real_labels_tensor=real_labels_tensor.unsqueeze(0)
 
@@ -227,7 +229,6 @@ class FlexMatch(AlgorithmBase):
                                          total_loss=total_loss.item(), 
                                          util_ratio=mask.float().mean().item())
         return out_dict, log_dict
-        
 
     def get_save_dict(self):
         save_dict = super().get_save_dict()
