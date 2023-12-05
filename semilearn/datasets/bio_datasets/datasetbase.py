@@ -1,8 +1,7 @@
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
 
 import random
 import numpy as np
+import transformers
 from torch.utils.data import Dataset
 
 from semilearn.datasets.utils import get_onehot
@@ -23,6 +22,8 @@ class BasicDataset(Dataset):
                  num_classes=None,
                  is_ulb=False,
                  onehot=False,
+                 tokenizer: transformers.PreTrainedTokenizer = None,
+                 kmer: int = -1,
                  *args, **kwargs):
         """
         Args
@@ -35,13 +36,25 @@ class BasicDataset(Dataset):
         self.alg = alg
         self.data = data
         self.targets = targets
-        self.num_classes = num_classes
         self.is_ulb = is_ulb
         self.onehot = onehot
+        self.tokenizer = tokenizer
         self.transform = None
+        self.kmer = kmer
+
+        output = self.tokenizer(
+            data,
+            return_tensors="pt",
+            padding="longest",
+            max_length=tokenizer.model_max_length,
+            truncation=True,
+        )
+        self.input_ids = output["input_ids"]
+        self.attention_mask = output["attention_mask"]
+        self.num_classes = num_classes if num_classes is not None else len(set(targets))
 
     def random_choose_sen(self):
-        return random.randint(1,2)
+        return random.randint(1, 2)
 
     def __getitem__(self, idx):
         """
@@ -81,4 +94,4 @@ class BasicDataset(Dataset):
                 return {'idx':idx, 'text':sen[0], 'text_s':sen[self.random_choose_sen()]}
 
     def __len__(self):
-        return len(self.data)
+        return len(self.input_ids)

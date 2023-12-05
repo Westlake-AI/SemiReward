@@ -1,15 +1,77 @@
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
 
+import csv
 import os
 import json
 import numpy as np
+import logging
+import torch
 
+from typing import List
 from semilearn.datasets.utils import split_ssl_data
 from .datasetbase import BasicDataset
 
 
-def get_json_dset(args, alg='fixmatch', dataset='acmIb', num_labels=40, num_classes=20, data_dir='./data', index=None, include_lb_to_ulb=True, onehot=False):
+def get_alter_of_dna_sequence(sequence: str):
+    """Get the reversed complement of the original DNA sequence."""
+    MAP = {"A": "T", "T": "A", "C": "G", "G": "C"}
+    # return "".join([MAP[c] for c in reversed(sequence)])
+    return "".join([MAP[c] for c in sequence])
+
+
+def generate_kmer_str(sequence: str, k: int) -> str:
+    """Generate k-mer string from DNA sequence."""
+    return " ".join([sequence[i:i+k] for i in range(len(sequence) - k + 1)])
+
+
+def load_or_generate_kmer(data_path: str, texts: List[str], k: int) -> List[str]:
+    """
+    Load or generate k-mer string for each DNA sequence.
+    The generated k-mer string will be saved to the same directory as the original data with the same name but with a suffix of "_{k}mer".
+    """
+    kmer_path = data_path.replace(".csv", f"_{k}mer.json")
+    if os.path.exists(kmer_path):
+        logging.warning(f"Loading k-mer from {kmer_path}...")
+        with open(kmer_path, "r") as f:
+            kmer = json.load(f)
+    else:        
+        logging.warning(f"Generating k-mer...")
+        kmer = [generate_kmer_str(text, k) for text in texts]
+        with open(kmer_path, "w") as f:
+            logging.warning(f"Saving k-mer to {kmer_path}...")
+            json.dump(kmer, f)
+        
+    return kmer
+
+
+def load_csv_data(data_path: str, kmer: int = -1):
+    # load data from the disk
+    with open(data_path, "r") as f:
+        data = list(csv.reader(f))[1:]
+    if len(data[0]) == 2:
+        # data is in the format of [text, label]
+        texts = [d[0] for d in data]
+        labels = [int(d[1]) for d in data]
+    elif len(data[0]) == 3:
+        # data is in the format of [text1, text2, label]
+        texts = [[d[0], d[1]] for d in data]
+        labels = [int(d[2]) for d in data]
+    else:
+        raise ValueError("Data format not supported.")
+
+    if kmer != -1:
+        # only write file on the first process
+        if torch.distributed.get_rank() not in [0, -1]:
+            torch.distributed.barrier()
+        logging.warning(f"Using {kmer}-mer as input...")
+        texts = load_or_generate_kmer(data_path, texts, kmer)
+        if torch.distributed.get_rank() == 0:
+            torch.distributed.barrier()
+
+    return texts, labels
+
+
+def get_json_dset(args, alg='fixmatch', dataset='acmIb', num_labels=40, num_classes=2,
+                  data_dir='./data', index=None, include_lb_to_ulb=True, onehot=False, kmer=-1):
         """
         get_ssl_dset split training samples into labeled and unlabeled samples.
         The labeled data is balanced samples over classes.
@@ -24,8 +86,12 @@ def get_json_dset(args, alg='fixmatch', dataset='acmIb', num_labels=40, num_clas
         Returns:
             BasicDataset (for labeled data), BasicDataset (for unlabeled data)
         """
-        json_dir = os.path.join(data_dir, dataset)
 
+        train_data, train_label = load_csv_data(os.path.join(data_dir, dataset, "train.csv"), kmer=kmer)
+        test_data, test_label = load_csv_data(os.path.join(data_dir, dataset, "test.csv"), kmer=kmer)
+        dev_data, dev_label = load_csv_data(os.path.join(data_dir, dataset, "dev.csv"), kmer=kmer)
+
+        json_dir = os.path.join(data_dir, dataset)
         # Supervised top line using all data as labeled data.
         with open(os.path.join(json_dir,'train.json'),'r') as json_data:
             train_data = json.load(json_data)
@@ -48,6 +114,7 @@ def get_json_dset(args, alg='fixmatch', dataset='acmIb', num_labels=40, num_clas
             for idx in test_data:
                 test_sen_list.append((test_data[idx]['ori'],'None','None'))
                 test_label_list.append(int(test_data[idx]['label']))
+
         dev_dset = BasicDataset(alg, dev_sen_list, dev_label_list, num_classes, False, onehot)
         test_dset = BasicDataset(alg, test_sen_list, test_label_list, num_classes, False, onehot)
         if alg == 'fullysupervised':

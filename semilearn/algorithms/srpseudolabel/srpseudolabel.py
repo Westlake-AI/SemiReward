@@ -4,7 +4,7 @@
 import torch
 import numpy as np
 from semilearn.core import AlgorithmBase
-from semilearn.core.utils import ALGORITHMS
+from semilearn.core.utils import ALGORITHMS, send_model_cuda
 from semilearn.algorithms.hooks import PseudoLabelingHook, FixedThresholdingHook
 from semilearn.algorithms.utils import SSL_Argument,str2bool
 from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n, add_gaussian_noise
@@ -36,12 +36,11 @@ class SRPseudoLabel(AlgorithmBase):
         self.init(p_cutoff=args.p_cutoff, unsup_warm_up=args.unsup_warm_up)
         self.task_type = args.task_type
         self.N_k = args.N_k
-        self.rewarder = (Rewarder(128, args.feature_dim).cuda(device=args.gpu) if args.sr_ema == 0 \
-                         else EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m).cuda(device=args.gpu))
-        self.generator = Generator(args.feature_dim).cuda (device=args.gpu)
-        
+        self.rewarder = send_model_cuda(args, Rewarder(128, args.feature_dim)) if args.sr_ema == 0 \
+                        else send_model_cuda(args, EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m), clip_batch=False)
+        self.generator = send_model_cuda(args, Generator(args.feature_dim))
         self.start_timing = args.start_timing
-        
+
         self.rewarder_optimizer = torch.optim.Adam(self.rewarder.parameters(), lr=args.sr_lr)
         self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=args.sr_lr)
 
@@ -186,27 +185,27 @@ class SRPseudoLabel(AlgorithmBase):
                         generator_loss = self.criterion(reward, torch.ones_like(reward).cuda(self.gpu))
                         rewarder_loss = self.criterion(reward, cosine_similarity_score)
 
-                        self.generator_optimizer.zero_grad()
-                        self.rewarder_optimizer.zero_grad()
-
                         generator_loss.backward(retain_graph=True)
                         rewarder_loss.backward(retain_graph=True)
 
                         self.generator_optimizer.step()
                         self.rewarder_optimizer.step()
+
+                        self.generator_optimizer.zero_grad()
+                        self.rewarder_optimizer.zero_grad()
                 else:
                     cosine_similarity_score = cosine_similarity_n(torch.floor(generated_label), real_labels_tensor) 
                     generator_loss = self.criterion(reward, torch.ones_like(reward).cuda(self.gpu))
                     rewarder_loss = self.criterion(reward, cosine_similarity_score)
-
-                    self.generator_optimizer.zero_grad()
-                    self.rewarder_optimizer.zero_grad()
 
                     generator_loss.backward(retain_graph=True)
                     rewarder_loss.backward(retain_graph=True)
 
                     self.generator_optimizer.step()
                     self.rewarder_optimizer.step()
+
+                    self.generator_optimizer.zero_grad()
+                    self.rewarder_optimizer.zero_grad()
 
             # calculate unlabeled loss
             unsup_warmup = np.clip(self.it / (self.unsup_warm_up * self.num_train_iter),  a_min=0.0, a_max=1.0)

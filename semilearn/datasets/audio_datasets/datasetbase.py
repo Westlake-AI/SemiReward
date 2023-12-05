@@ -2,13 +2,11 @@
 # Licensed under the MIT License.
 
 import torch
-import numpy as np
 import random
 import torchaudio
 
 from torch.utils.data import Dataset
 from semilearn.datasets.utils import get_onehot, random_subsample
-
 
 
 class WaveformTransforms:
@@ -39,7 +37,6 @@ class WaveformTransforms:
         aug_wav, _ = torchaudio.sox_effects.apply_effects_tensor(wav, sample_rate=self.sample_rate, effects=effects)
         aug_wav = aug_wav.numpy()[0]
         return aug_wav
-
 
 
 class BasicDataset(Dataset):
@@ -83,7 +80,6 @@ class BasicDataset(Dataset):
         # self.feature_extractor = AutoFeatureExtractor.from_pretrained(net)
         self.transform = None
         self.strong_transform = WaveformTransforms(sample_rate=sample_rate, max_length=max_length_seconds)
-
 
     def __getitem__(self, idx):
         """

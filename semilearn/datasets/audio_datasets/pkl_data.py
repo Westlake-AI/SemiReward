@@ -10,7 +10,6 @@ from semilearn.datasets.utils import split_ssl_data, bytes_to_array
 from .datasetbase import BasicDataset
 
 
-
 def get_pkl_dset(args, alg='fixmatch', dataset='esc50', num_labels=40, num_classes=20, data_dir='./data', include_lb_to_ulb=True, onehot=False):
     """
     get_ssl_dset split training samples into labeled and unlabeled samples.
@@ -64,12 +63,18 @@ def get_pkl_dset(args, alg='fixmatch', dataset='esc50', num_labels=40, num_class
         test_wav_list.append(bytes_to_array(test_data[idx]['wav']))
         test_label_list.append(int(test_data[idx]['label']))
 
-    dev_dset = BasicDataset(alg=alg, data=dev_wav_list, targets=dev_label_list, num_classes=num_classes, is_ulb=False, one_hot=onehot, max_length_seconds=args.max_length_seconds, is_train=False)
-    test_dset = BasicDataset(alg=alg, data=test_wav_list, targets=test_label_list, num_classes=num_classes, is_ulb=False, one_hot=onehot, max_length_seconds=args.max_length_seconds, is_train=False)
+    dev_dset = BasicDataset(alg=alg, data=dev_wav_list, targets=dev_label_list,
+                            num_classes=num_classes, is_ulb=False, one_hot=onehot,
+                            max_length_seconds=args.max_length_seconds, is_train=False)
+    test_dset = BasicDataset(alg=alg, data=test_wav_list, targets=test_label_list,
+                             num_classes=num_classes, is_ulb=False, one_hot=onehot,
+                             max_length_seconds=args.max_length_seconds, is_train=False)
     if alg == 'fullysupervised':
-        lb_dset = BasicDataset(alg=alg, data=train_wav_list, targets=train_label_list, num_classes=num_classes, is_ulb=False, one_hot=onehot, max_length_seconds=args.max_length_seconds, is_train=True)
+        lb_dset = BasicDataset(alg=alg, data=train_wav_list, targets=train_label_list,
+                               num_classes=num_classes, is_ulb=False, one_hot=onehot,
+                               max_length_seconds=args.max_length_seconds, is_train=True)
         return lb_dset, None, dev_dset, test_dset
-    
+
     if dataset == 'fsdnoisy':
         # TODO: take care of this for imbalanced setting
         ulb_wav_list = []
@@ -102,7 +107,11 @@ def get_pkl_dset(args, alg='fixmatch', dataset='esc50', num_labels=40, num_class
         os.makedirs(output_file, exist_ok=True)
     with open(output_path, 'w') as w:
         json.dump(out, w)
-            
-    lb_dset = BasicDataset(alg=alg, data=lb_wav_list, targets=lb_label_list, num_classes=num_classes, is_ulb=False, one_hot=onehot, max_length_seconds=args.max_length_seconds, is_train=True)
-    ulb_dset = BasicDataset(alg=alg, data=ulb_wav_list, targets=ulb_label_list, num_classes=num_classes, is_ulb=True, one_hot=onehot, max_length_seconds=args.max_length_seconds, is_train=True)
+
+    lb_dset = BasicDataset(alg=alg, data=lb_wav_list, targets=lb_label_list,
+                           num_classes=num_classes, is_ulb=False, one_hot=onehot,
+                           max_length_seconds=args.max_length_seconds, is_train=True)
+    ulb_dset = BasicDataset(alg=alg, data=ulb_wav_list, targets=ulb_label_list,
+                            num_classes=num_classes, is_ulb=True, one_hot=onehot,
+                            max_length_seconds=args.max_length_seconds, is_train=True)
     return lb_dset, ulb_dset, dev_dset, test_dset
