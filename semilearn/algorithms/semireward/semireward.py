@@ -145,8 +145,14 @@ class EMARewarder(nn.Module):
 
 
 def cosine_similarity_n(x, y):
-    cosine_similarity = torch.cosine_similarity(x, y,dim=-1)
-    normalized_similarity = (cosine_similarity+1) / 2 
+
+    # Calculate cosine similarity along the last dimension (dim=-1)
+    cosine_similarity = torch.cosine_similarity(x, y, dim=-1, eps=1e-8)
+
+    # Reshape the result to [8, 1]
+    normalized_similarity = (cosine_similarity + 1) / 2
+    normalized_similarity = normalized_similarity.view(8, 1)
+
     return normalized_similarity
 
 
@@ -154,3 +160,10 @@ def add_gaussian_noise(tensor, mean=0, std=1):
     noise = torch.randn_like(tensor) * std + mean
     noisy_tensor = tensor + noise
     return noisy_tensor
+
+def label_embedding_dim(x):
+    if x > 100:
+        u_dim=x
+    else:
+        u_dim=100
+    return u_dim

@@ -2,15 +2,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import os
 import torch
-import numpy as np
+import torch.nn.functional as F
 from .utils import FlexMatchThresholdingHook
 from semilearn.core import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS, send_model_cuda
 from semilearn.algorithms.hooks import PseudoLabelingHook
 from semilearn.algorithms.utils import SSL_Argument, str2bool
-from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n
+from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n, label_embedding_dim
 
 
 @ALGORITHMS.register('srflexmatch')
@@ -47,8 +46,8 @@ class SRFlexMatch(AlgorithmBase):
         # flexmatch specified arguments
         self.init(T=args.T, p_cutoff=args.p_cutoff, hard_label=args.hard_label, thresh_warmup=args.thresh_warmup)
         self.N_k = args.N_k
-        self.rewarder = send_model_cuda(args, Rewarder(128, args.feature_dim)) if args.sr_ema == 0 \
-                        else send_model_cuda(args, EMARewarder(128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m), clip_batch=False)
+        self.rewarder = send_model_cuda(args, Rewarder(label_embedding_dim(self.num_classes), args.feature_dim)) if args.sr_ema == 0 \
+                        else send_model_cuda(args, EMARewarder(label_embedding_dim(self.num_classes), feature_dim=args.feature_dim, ema_decay=args.sr_ema_m), clip_batch=False)
         self.generator = send_model_cuda(args, Generator(args.feature_dim))
         self.start_timing = args.start_timing
 
@@ -72,8 +71,6 @@ class SRFlexMatch(AlgorithmBase):
     def data_generator(self, x_lb, y_lb, idx_ulb, x_ulb_w, x_ulb_s, rewarder,gpu):
         gpu = gpu
         rewarder = rewarder.eval()
-        unsup_losss = None
-        rewards = None
         for _ in range(self.sr_decay()):  
             num_lb = y_lb.shape[0]
             with self.amp_cm():
@@ -99,17 +96,12 @@ class SRFlexMatch(AlgorithmBase):
                                       softmax=False)
             mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=probs_x_ulb_w, softmax_x_ulb=False, idx_ulb=idx_ulb)
             reward = rewarder(feats_x_ulb_w, pseudo_label)
-            reward = reward.mean()
-            unsup_loss = self.consistency_loss(logits_x_ulb_s, pseudo_label,'ce', mask=mask)
-
-            rewards = torch.cat((rewards, reward.unsqueeze(0))) if rewards is not None else reward.unsqueeze(0)
-            unsup_losss = torch.cat((unsup_losss, unsup_loss.unsqueeze(0))) if unsup_losss is not None else unsup_loss.unsqueeze(0)
-        avg_rewards = rewards.mean()
-        mask = torch.where(rewards > avg_rewards, torch.tensor(1).cuda(gpu), torch.tensor(0).cuda(gpu))
-        unsup_loss = unsup_loss * mask
-        unsup_loss = unsup_loss.mean()
-
+            avg_reward=reward.mean()
+            mask2 = torch.where(reward >= avg_reward, torch.tensor(1).cuda(gpu), torch.tensor(0).cuda(gpu)).squeeze().float()
+            unsup_loss = self.consistency_loss(logits_x_ulb_s, pseudo_label,'ce', mask=mask,mask2=mask2)
+        unsup_loss = unsup_loss
         return unsup_loss
+
 
     def train_step(self, x_lb, y_lb, idx_ulb, x_ulb_w, x_ulb_s):
         num_lb = y_lb.shape[0]
@@ -151,74 +143,67 @@ class SRFlexMatch(AlgorithmBase):
                                           use_hard_label=self.use_hard_label,
                                           T=self.T,
                                           softmax=False)
-            # SemiReward inference
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                unsup_loss = self.data_generator(x_lb, y_lb, idx_ulb, x_ulb_w, x_ulb_s, rewarder, self.gpu)
+                unsup_loss = self.data_generator(x_lb, y_lb,idx_ulb, x_ulb_w, x_ulb_s,rewarder,self.gpu)
             else:
+                pseudo_label = pseudo_label
                 unsup_loss = self.consistency_loss(logits_x_ulb_s, pseudo_label,'ce', mask=mask)
-
-            # SemiReward training
+            
             if self.it > 0:
-                # Generate pseudo labels using the generator (your pseudo-labeling process)
+            # Generate pseudo labels using the generator (your pseudo-labeling process)
                 self.rewarder.train()
                 self.generator.train()
-                generated_label = self.generator(feats_x_lb).detach()
-
-                # Convert generated pseudo labels and true labels to tensors
-                real_labels_tensor = y_lb.cuda(self.gpu).view(-1)
-                real_labels_tensor=real_labels_tensor.unsqueeze(0)
-
-                generated_label = generated_label.view(-1)               
-                reward = self.rewarder(feats_x_lb,generated_label.long())
-                reward = reward.mean().unsqueeze(0)
-
+                generated_label = self.generator(feats_x_lb.detach()).detach()
+                generated_label=generated_label.long()
+            # Convert generated pseudo labels and true labels to tensors
+                real_labels_tensor = y_lb.cuda(self.gpu)          
+                reward = self.rewarder(feats_x_lb.detach(),generated_label.squeeze(1))
                 if self.it >= self.start_timing:
-                    filtered_pseudo_labels = pseudo_label
-                    filtered_feats_x_ulb_w = feats_x_ulb_w
+                    filtered_pseudo_labels = pseudo_label.long()
+                    filtered_feats_x_ulb_w = feats_x_ulb_w.detach()
                     rewarder = self.rewarder.eval()
-
                     max_reward = -float('inf')
-                    reward = self.rewarder(feats_x_ulb_w, pseudo_label)
+                    reward = self.rewarder(feats_x_ulb_w.detach(), pseudo_label.long())
                     reward = reward.mean()
-
                     max_reward = torch.where(reward > max_reward, reward, max_reward)
-                    filtered_pseudo_labels = torch.where(reward > max_reward, pseudo_label, filtered_pseudo_labels)
-                    filtered_feats_x_ulb_w = torch.where(reward > max_reward, feats_x_ulb_w, filtered_feats_x_ulb_w)
+                    filtered_pseudo_labels = torch.where(reward > max_reward, pseudo_label.detach(), filtered_pseudo_labels)
+                    filtered_feats_x_ulb_w = torch.where(reward > max_reward, feats_x_ulb_w.detach(), filtered_feats_x_ulb_w)
                     if self.it % self.N_k == 0 and self.it > self.start_timing:
-                        max_reward = -float('inf')
-
                         self.rewarder.train()
                         self.generator.train()
-                        generated_label = self.generator(feats_x_ulb_w).detach()
-                        generated_label = generated_label.view(-1)
-                        reward = self.rewarder(feats_x_ulb_w, generated_label.long())
-                        reward = reward.mean()
-                        cosine_similarity_score = cosine_similarity_n(torch.floor(generated_label), filtered_pseudo_labels)
+                        generated_label = self.generator(filtered_feats_x_ulb_w.squeeze(1)).detach()
+                        generated_label=generated_label.long()
+                        reward = self.rewarder(filtered_feats_x_ulb_w, generated_label.squeeze(1))
+                        generated_label = F.one_hot(generated_label.squeeze(1), num_classes=self.num_classes)
+                        filtered_pseudo_labels= F.one_hot(filtered_pseudo_labels.long(), num_classes=self.num_classes)
+                        cosine_similarity_score = cosine_similarity_n(generated_label.float(), filtered_pseudo_labels.float())
                         generator_loss = self.criterion(reward, torch.ones_like(reward).cuda(self.gpu))
                         rewarder_loss = self.criterion(reward, cosine_similarity_score)
+
+                        self.generator_optimizer.zero_grad()
+                        self.rewarder_optimizer.zero_grad()
                 
                         generator_loss.backward(retain_graph=True)
                         rewarder_loss.backward(retain_graph=True)
 
                         self.generator_optimizer.step()
                         self.rewarder_optimizer.step()
-
-                        self.generator_optimizer.zero_grad()
-                        self.rewarder_optimizer.zero_grad()
                 else:
-                    cosine_similarity_score = cosine_similarity_n(torch.floor(generated_label), real_labels_tensor) 
+                    generated_label = F.one_hot(generated_label.squeeze(1), num_classes=self.num_classes)
+                    real_labels_tensor=F.one_hot(real_labels_tensor, num_classes=self.num_classes)
+                    cosine_similarity_score = cosine_similarity_n(generated_label.float(), real_labels_tensor.float()) 
                     generator_loss = self.criterion(reward, torch.ones_like(reward).cuda(self.gpu))
                     rewarder_loss = self.criterion(reward, cosine_similarity_score)
+
+                    self.generator_optimizer.zero_grad()
+                    self.rewarder_optimizer.zero_grad()
                 
                     generator_loss.backward(retain_graph=True)
                     rewarder_loss.backward(retain_graph=True)
 
                     self.generator_optimizer.step()
                     self.rewarder_optimizer.step()
-
-                    self.generator_optimizer.zero_grad()
-                    self.rewarder_optimizer.zero_grad()
 
             total_loss = sup_loss + self.lambda_u * unsup_loss
 
