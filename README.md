@@ -88,6 +88,7 @@ class="center">
 
 ## News and Updates
 
+- [1/13/2024] SemiReward v0.2.0 has been updated.
 - [10/18/2023] SemiReward v0.1.0 has been released.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
