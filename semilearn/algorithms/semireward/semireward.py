@@ -23,7 +23,7 @@ class Generator(nn.Module):
 
 
 class Rewarder(nn.Module):
-    def __init__(self, label_embedding_dim, feature_dim=384):
+    def __init__(self, label_dim, label_embedding_dim, feature_dim=384):
         super(Rewarder, self).__init__()
 
         # Feature Processing Part
@@ -31,7 +31,7 @@ class Rewarder(nn.Module):
         self.feature_norm = nn.LayerNorm(128)
         
         # Label Embedding Part
-        self.label_embedding = nn.Embedding(100, label_embedding_dim)
+        self.label_embedding = nn.Embedding(label_dim, label_embedding_dim)
         self.label_norm = nn.LayerNorm(label_embedding_dim)
         
         # Cross-Attention Mechanism
@@ -49,30 +49,27 @@ class Rewarder(nn.Module):
         # Process Features
         features = self.feature_fc(features)
         features = self.feature_norm(features)
-         
         # Process Labels
         label_embed = self.label_embedding(label_indices)
         label_embed = self.label_norm(label_embed)
-        
         # Cross-Attention Mechanism
-        cross_attention_input = torch.cat((features.unsqueeze(0), label_embed.unsqueeze(0)), dim=0)
+        cross_attention_input = torch.cat((features, label_embed), dim=0)
         cross_attention_weights = torch.softmax(self.cross_attention_fc(cross_attention_input), dim=0)
         cross_attention_output = (cross_attention_weights * cross_attention_input).sum(dim=0)
         
         # MLP Part
-        mlp_input = torch.cat((cross_attention_output, label_embed), dim=0)
+        mlp_input = torch.add(cross_attention_output.unsqueeze(0).expand(8, -1), label_embed)
         mlp_output = F.relu(self.mlp_fc1(mlp_input))
         mlp_output = self.mlp_fc2(mlp_output)
         
         # FFN Part
         ffn_output = F.relu(self.ffn_fc1(mlp_output))
         reward = torch.sigmoid(self.ffn_fc2(ffn_output))
-        
         return reward
 
 
 class EMARewarder(nn.Module):
-    def __init__(self, label_embedding_dim, feature_dim=384, ema_decay=0.9):
+    def __init__(self, label_dim, label_embedding_dim, feature_dim=384, ema_decay=0.9):
         super(EMARewarder, self).__init__()
 
         # Feature Processing Part
@@ -80,7 +77,7 @@ class EMARewarder(nn.Module):
         self.feature_norm = nn.LayerNorm(128)
 
         # Label Embedding Part
-        self.label_embedding = nn.Embedding(100, label_embedding_dim)
+        self.label_embedding = nn.Embedding(label_dim, label_embedding_dim)
         self.label_norm = nn.LayerNorm(label_embedding_dim)
 
         # Cross-Attention Mechanism
@@ -119,21 +116,19 @@ class EMARewarder(nn.Module):
         # Process Features
         features = self.feature_fc(features)
         features = self.feature_norm(features)
-
         # Process Labels
         label_embed = self.label_embedding(label_indices)
         label_embed = self.label_norm(label_embed)
-
         # Cross-Attention Mechanism
-        cross_attention_input = torch.cat((features.unsqueeze(0), label_embed.unsqueeze(0)), dim=0)
+        cross_attention_input = torch.cat((features, label_embed), dim=0)
         cross_attention_weights = torch.softmax(self.cross_attention_fc(cross_attention_input), dim=0)
         cross_attention_output = (cross_attention_weights * cross_attention_input).sum(dim=0)
-
+        
         # MLP Part
-        mlp_input = torch.cat((cross_attention_output, label_embed), dim=0)
+        mlp_input = torch.add(cross_attention_output.unsqueeze(0).expand(8, -1), label_embed)
         mlp_output = F.relu(self.mlp_fc1(mlp_input))
         mlp_output = self.mlp_fc2(mlp_output)
-
+        
         # FFN Part
         ffn_output = F.relu(self.ffn_fc1(mlp_output))
         reward = torch.sigmoid(self.ffn_fc2(ffn_output))
@@ -161,9 +156,5 @@ def add_gaussian_noise(tensor, mean=0, std=1):
     noisy_tensor = tensor + noise
     return noisy_tensor
 
-def label_embedding_dim(x):
-    if x > 100:
-        u_dim=x
-    else:
-        u_dim=100
-    return u_dim
+def label_dim(x, default_dim=100):
+    return int(max(default_dim, x))

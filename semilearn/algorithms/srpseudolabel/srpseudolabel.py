@@ -8,7 +8,7 @@ from semilearn.core import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS, send_model_cuda
 from semilearn.algorithms.hooks import PseudoLabelingHook, FixedThresholdingHook
 from semilearn.algorithms.utils import SSL_Argument,str2bool
-from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n, add_gaussian_noise, label_embedding_dim
+from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n, add_gaussian_noise, label_dim
 
 @ALGORITHMS.register('srpseudolabel')
 class SRPseudoLabel(AlgorithmBase):
@@ -36,8 +36,8 @@ class SRPseudoLabel(AlgorithmBase):
         self.init(p_cutoff=args.p_cutoff, unsup_warm_up=args.unsup_warm_up)
         self.task_type = args.task_type
         self.N_k = args.N_k
-        self.rewarder = send_model_cuda(args, Rewarder(label_embedding_dim(self.num_classes), args.feature_dim)) if args.sr_ema == 0 \
-                        else send_model_cuda(args, EMARewarder(label_embedding_dim(self.num_classes), feature_dim=args.feature_dim, ema_decay=args.sr_ema_m), clip_batch=False)
+        self.rewarder = send_model_cuda(args, Rewarder(label_dim(self.num_classes), 128, args.feature_dim)) if args.sr_ema == 0 \
+                        else send_model_cuda(args, EMARewarder(label_dim(self.num_classes), 128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m), clip_batch=False)
         self.generator = send_model_cuda(args, Generator(args.feature_dim))
         self.start_timing = args.start_timing
 

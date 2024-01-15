@@ -7,7 +7,7 @@ from semilearn.core.algorithmbase import AlgorithmBase
 from semilearn.core.utils import ALGORITHMS, send_model_cuda
 from semilearn.algorithms.hooks import PseudoLabelingHook, FixedThresholdingHook
 from semilearn.algorithms.utils import SSL_Argument, str2bool
-from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n, label_embedding_dim
+from semilearn.algorithms.semireward import Rewarder, Generator, EMARewarder, cosine_similarity_n, label_dim
 
 
 @ALGORITHMS.register('srfixmatch')
@@ -38,8 +38,8 @@ class SRFixMatch(AlgorithmBase):
         # fixmatch specified arguments
         self.init(T=args.T, p_cutoff=args.p_cutoff, hard_label=args.hard_label)
         self.N_k = args.N_k
-        self.rewarder = send_model_cuda(args, Rewarder(label_embedding_dim(self.num_classes), args.feature_dim)) if args.sr_ema == 0 \
-                        else send_model_cuda(args, EMARewarder(label_embedding_dim(self.num_classes), feature_dim=args.feature_dim, ema_decay=args.sr_ema_m), clip_batch=False)
+        self.rewarder = send_model_cuda(args, Rewarder(label_dim(self.num_classes), 128, args.feature_dim)) if args.sr_ema == 0 \
+                        else send_model_cuda(args, EMARewarder(label_dim(self.num_classes), 128, feature_dim=args.feature_dim, ema_decay=args.sr_ema_m), clip_batch=False)
         self.generator = send_model_cuda(args, Generator(args.feature_dim))
         self.start_timing = args.start_timing
 
