@@ -129,8 +129,7 @@ class SRPseudoLabel(AlgorithmBase):
             # SemiReward inference
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                for unsup_loss in self.data_generator(x_lb, x_ulb_w, rewarder,self.gpu):
-                    unsup_loss = unsup_loss
+                unsup_loss = self.data_generator(x_lb, x_ulb_w, rewarder, self.gpu)
             else:
                 unsup_loss = self.consistency_loss(logits_x_ulb, pseudo_label,
                                                name='ce' if self.task_type == 'cls' else 'l1',
