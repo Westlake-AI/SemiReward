@@ -1,8 +1,8 @@
 algorithm: srflexmatch
 save_dir: ./saved_models/usb_nlp
-save_name: flexmatch_yahoo_answers_500_0
+save_name: srflexmatch_yahoo_answers_500_0
 resume: True
-load_path: ./saved_models/usb_nlpflexmatch_yahoo_answers_500_0/latest_model.pth
+load_path: ./saved_models/srflexmatch_yahoo_answers_500_0/latest_model.pth
 overwrite: True
 use_tensorboard: True
 use_wandb: False

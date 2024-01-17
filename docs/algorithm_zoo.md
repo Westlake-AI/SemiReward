@@ -16,6 +16,7 @@ In addtion to fully-supervised method (as a baseline), USB supports the followin
 12. [FlexMatch](https://arxiv.org/abs/2110.08263): firstly introduces the class-specific thresholds into SSL by considering the different learning difficulties of different classes. Specifically, the hard-to-learn classes should have a low threshold to speed up convergence while the easy-to-learn classes should have a high threshold to avoid confirmation bias.
 13. [AdaMatch](https://arxiv.org/abs/2106.04732): is proposed mainly for domain adaption, but can also adapted to SSL. It is characterized by Relative Threshold and Distribution Alignment, where the relative threshold is adaptively estimated from EMA of the confidence on labeled data.
 14. [SimMatch](https://arxiv.org/abs/2203.06915): extends [CoMatch](https://arxiv.org/abs/2011.11183) by considering semantic-level and instance-level consistency regularization. Similar similarity relationship of different augmented versions on the same data with respect to other instances is encouraged during training. In addition, a memory buffer consisting of predictions on labeled data is adopted to connect the two-level regularization.
-15. [Freematch](https://arxiv.org/abs/2205.07246): 
-16. [SoftMatch](https://openreview.net/forum?id=ymt1zQXBDiF&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2023%2FConference%2FAuthors%23your-submissions)):
-17. [DeFixMatch] (https://arxiv.org/abs/2203.07512)
+15. [Freematch](https://arxiv.org/abs/2205.07246).
+16. [SoftMatch](https://openreview.net/forum?id=ymt1zQXBDiF&referrer=%5BAuthor%20Console%5D(%2Fgroup%3Fid%3DICLR.cc%2F2023%2FConference%2FAuthors%23your-submissions)).
+17. [DeFixMatch](https://arxiv.org/abs/2203.07512).
+18. [SemiReward](https://openreview.net/forum?id=dnqPvUjyRI): firstly designes a reward model to predict reward scores for filtering out high-quality pseudo labels, which is pluggable to mainstream Semi-Supervised Learning (SSL) methods in wide task types and scenarios.

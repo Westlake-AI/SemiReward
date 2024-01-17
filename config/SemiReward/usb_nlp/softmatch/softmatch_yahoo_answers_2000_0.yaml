@@ -1,8 +1,8 @@
 algorithm: srsoftmatch
 save_dir: ./saved_models/usb_nlp
-save_name: softmatch_yahoo_answers_2000_0
+save_name: srsoftmatch_yahoo_answers_2000_0
 resume: True
-load_path: ./saved_models/usb_nlp/softmatch_yahoo_answers_2000_0/latest_model.pth
+load_path: ./saved_models/usb_nlp/srsoftmatch_yahoo_answers_2000_0/latest_model.pth
 overwrite: True
 use_tensorboard: True
 use_wandb: False

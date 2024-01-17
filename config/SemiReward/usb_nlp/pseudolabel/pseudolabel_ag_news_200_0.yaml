@@ -1,8 +1,8 @@
 algorithm: srpseudolabel
 save_dir: ./saved_models/usb_nlp
-save_name: pseudolabel_ag_news_200_0
+save_name: srpseudolabel_ag_news_200_0
 resume: True
-load_path: ./saved_models/usb_nlp/pseudolabel_ag_news_200_0/latest_model.pth
+load_path: ./saved_models/usb_nlp/srpseudolabel_ag_news_200_0/latest_model.pth
 overwrite: True
 use_tensorboard: True
 use_wandb: False

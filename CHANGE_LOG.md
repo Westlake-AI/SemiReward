@@ -2,7 +2,8 @@
 
 ## SemiReward Update
 
-* [10/18/2023] SemiReward==0.1.0 has been released with is based on semilearn==0.3.1.
+* [10/16/2024] SemiReward==0.2.0 has been released and SemiReward is accepted by ICLR'2024.
+* [10/18/2023] SemiReward==0.1.0 has been released, which is based on semilearn==0.3.1.
 * Update config files for SemiReward based on Pseudo-Labeling, FlexMatch, SoftMatch, and FreeMatch.
 * Update regression datasets, losses, evaluation hooks.
 

@@ -1,8 +1,8 @@
 algorithm: srflexmatch
 save_dir: ./saved_models/usb_audio
-save_name: flexmatch_fsdnoisy_1773_0
+save_name: srflexmatch_fsdnoisy_1773_0
 resume: True
-load_path: ./saved_models/usb_audio/flexmatch_fsdnoisy_1773_0/latest_model.pth
+load_path: ./saved_models/usb_audio/srflexmatch_fsdnoisy_1773_0/latest_model.pth
 overwrite: True
 use_tensorboard: True
 epoch: 100

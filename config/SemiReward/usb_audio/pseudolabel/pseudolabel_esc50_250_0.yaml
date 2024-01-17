@@ -1,8 +1,8 @@
 algorithm: srpseudolabel
 save_dir: ./saved_models/usb_audio
-save_name: pseudolabel_esc50_250_0
+save_name: srpseudolabel_esc50_250_0
 resume: True
-load_path: ./saved_models/usb_audio/pseudolabel_esc50_250_0/latest_model.pth
+load_path: ./saved_models/usb_audio/srpseudolabel_esc50_250_0/latest_model.pth
 overwrite: True
 use_tensorboard: True
 epoch: 100

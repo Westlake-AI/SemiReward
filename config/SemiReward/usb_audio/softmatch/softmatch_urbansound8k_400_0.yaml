@@ -1,8 +1,8 @@
 algorithm: srsoftmatch
 save_dir: ./saved_models/usb_audio
-save_name: softmatch_urbansound8k_400_0
+save_name: srsoftmatch_urbansound8k_400_0
 resume: True
-load_path: ./saved_models/usb_audio/softmatch_urbansound8k_400_0/latest_model.pth
+load_path: ./saved_models/usb_audio/srsoftmatch_urbansound8k_400_0/latest_model.pth
 overwrite: True
 use_tensorboard: True
 epoch: 100

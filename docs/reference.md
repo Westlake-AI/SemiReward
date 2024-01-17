@@ -64,4 +64,4 @@ Reference
 
 [32] Schmutz, Hugo, Humbert, Olivier, Mattei, Pierre-Alexandre, Don't fear the unlabelled: safe semi-supervised learning via simple debiasing, ICLR, 2023
 
-[33] Siyuan Li, Weiyang Jin, Zedong Wang, Fang Wu, Zecheng Liu, Cheng Tan, Stan Z. Li, SemiReward: A General Reward Model for Semi-supervised Learning, arXiv, 2023
+[33] Siyuan Li, Weiyang Jin, Zedong Wang, Fang Wu, Zecheng Liu, Cheng Tan, Stan Z. Li, SemiReward: A General Reward Model for Semi-supervised Learning, ICLR, 2024

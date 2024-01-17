@@ -1,8 +1,8 @@
 algorithm: srflexmatch
 save_dir: /liuzicheng/jwy/saved_models/usb_audio
-save_name: flexmatch_urbansound8k_400_stg1
+save_name: srflexmatch_urbansound8k_400_0
 resume: True
-load_path: /liuzicheng/jwy/saved_models/usb_audio/flexmatch_urbansound8k_400_stg1/latest_model.pth
+load_path: /liuzicheng/jwy/saved_models/usb_audio/srflexmatch_urbansound8k_400_0/latest_model.pth
 overwrite: True
 use_tensorboard: True
 epoch: 100

@@ -1,8 +1,8 @@
 algorithm: srfreematch
 save_dir: ./saved_models/usb_cv/
-save_name: freematch_eurosat_40_0
+save_name: srfreematch_eurosat_40_0
 resume: True
-load_path: ./saved_models/usb_cv//freematch_eurosat_40_0/latest_model.pth
+load_path: ./saved_models/usb_cv//srfreematch_eurosat_40_0/latest_model.pth
 overwrite: True
 use_tensorboard: True
 use_wandb: False

@@ -28,7 +28,7 @@
 <!-- PROJECT LOGO -->
 
 <div align="center">
-<h2><a href="https://arxiv.org/abs/2310.03013">SemiReward: A General Reward Model for Semi-supervised Learning</a> </h2>
+<h2><a href="https://arxiv.org/abs/2310.03013">SemiReward: A General Reward Model for Semi-supervised Learning (ICLR 2024)</a> </h2>
 
 [Siyuan Li](https://lupin1998.github.io/)<sup>\*,1,2</sup>, [Weiyang Jin](https://scholar.google.co.id/citations?hl=zh-CN&user=cazmdIMAAAAJ)<sup>\*,1</sup>, [Zedong Wang](https://zedongwang.netlify.app/)<sup>1,2</sup>, [Fang Wu](https://smiles724.github.io/)<sup>1,2</sup>, [Zicheng Liu](https://pone7.github.io/)<sup>1,2</sup>, [Chen Tan](https://chengtan9907.github.io/)<sup>1,2</sup>, [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ&hl=zh-CN)<sup>†,1</sup>
 
@@ -40,8 +40,8 @@
     <img src="https://img.shields.io/badge/arXiv-2310.03013-b31b1b.svg?style=flat" /></a>
 <a href="https://github.com/Westlake-AI/SemiReward/blob/main/LICENSE.txt" alt="license">
     <img src="https://img.shields.io/badge/license-Apache--2.0-%23B7A800" /></a>
-<!-- <a href="https://colab.research.google.com/github/Westlake-AI/MogaNet/blob/main/demo.ipynb" alt="Colab">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" /></a> -->
+<a href="https://openreview.net/forum?id=dnqPvUjyRI" alt="Colab">
+    <img src="https://img.shields.io/badge/openreview-SemiReward-blue" /></a>
 </p>
 
 Semi-supervised Reward framework (SemiReward) is designed to predict reward scores to evaluate and filter out high-quality pseudo labels, which is pluggable to mainstream Semi-Supervised Learning (SSL) methods in wide task types and scenarios. The results and details are reported in [our paper](https://arxiv.org/abs/2310.03013). The implementations and models of **SemiReward** are based on **USB** codebase.
@@ -88,7 +88,7 @@ class="center">
 
 ## News and Updates
 
-- [1/13/2024] SemiReward v0.2.0 has been updated.
+- [01/16/2024] SemiReward v0.2.0 has been updated and accepted by [ICLR'2024](https://openreview.net/forum?id=dnqPvUjyRI).
 - [10/18/2023] SemiReward v0.1.0 has been released.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -129,12 +129,7 @@ USB provide a Python package *semilearn* of USB for users who want to start trai
 pip install semilearn
 ```
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-### Development
-
 You can also develop your own SSL algorithm and evaluate it by cloning SemiReward (USB):
-
 ```sh
 git clone https://github.com/Westlake-AI/SemiReward.git
 ```
@@ -211,6 +206,11 @@ After training, you can check the evaluation performance on training logs, or ru
 python eval.py --dataset cifar100 --num_classes 100 --load_path /PATH/TO/CHECKPOINT
 ```
 
+<p align="center">
+<img src="https://github.com/Westlake-AI/openmixup/assets/44519745/266f5667-9e5f-44c9-ba63-f3e8b733d5a9" width=95% 
+class="center">
+</p>
+
 ### Develop
 
 Check the developing documentation for creating your own SSL algorithm!
@@ -230,8 +230,6 @@ If you have any ideas to improve SemiReward, we welcome your contributions! Feel
 4. Push to the branch (`git push origin your_name/your_branch`)
 5. Open a Pull Request
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 
 ## License
 
@@ -240,16 +238,16 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
-## Citing SemiRward
+## Citation
 
 Please consider citing us if you find this project helpful for your project/paper:
 
 ```
-@article{li2023semireward,
+@inproceedings{iclr2024semireward,
   title={SemiReward: A General Reward Model for Semi-supervised Learning},
   author={Siyuan Li and Weiyang Jin and Zedong Wang and Fang Wu and Zicheng Liu and Cheng Tan and Stan Z. Li},
-  journal={arXiv preprint arXiv:2310.03013},
-  year={2023}
+  booktitle={International Conference on Learning Representations},
+  year={2024}
 }
 ```
 

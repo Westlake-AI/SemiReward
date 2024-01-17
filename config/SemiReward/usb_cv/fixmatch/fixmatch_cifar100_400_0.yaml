@@ -1,6 +1,6 @@
 algorithm: srfixmatch
 save_dir: ./saved_models/usb_cv/
-save_name: fixmatch_cifar100_400_0
+save_name: srfixmatch_cifar100_400_0
 resume: True
 load_path: ./saved_models/usb_cv//srfixmatch_cifar100_400_0/latest_model.pth
 overwrite: True
