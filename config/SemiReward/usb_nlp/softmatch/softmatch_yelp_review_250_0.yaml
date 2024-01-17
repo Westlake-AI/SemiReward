@@ -47,8 +47,8 @@ multiprocessing_distributed: False
 dist_url: tcp://127.0.0.1:10102
 dist_backend: nccl
 gpu: None
-start_timing: 20000
-feature_dim: 384
+start_timing: 10000
+feature_dim: 768
 sr_lr: 0.0005
 N_k: 10
 sr_ema: False
