@@ -4,6 +4,8 @@ import torch.nn.functional as F
 
 
 class Generator(nn.Module):
+    """Fake Label Generator in SemiReward"""
+
     def __init__(self, feature_dim=384):
         super(Generator, self).__init__()
         self.fc_layers = nn.Sequential(
@@ -23,6 +25,8 @@ class Generator(nn.Module):
 
 
 class Rewarder(nn.Module):
+    """Pseudo Label Reward in SemiReward"""
+
     def __init__(self, label_dim, label_embedding_dim, feature_dim=384):
         super(Rewarder, self).__init__()
 
@@ -68,29 +72,12 @@ class Rewarder(nn.Module):
         return reward
 
 
+class EMARewarder(Rewarder):
+    """EMA version of Reward in SemiReward"""
 
-class EMARewarder(nn.Module):
     def __init__(self, label_dim, label_embedding_dim, feature_dim=384, ema_decay=0.9):
-        super(EMARewarder, self).__init__()
-
-        # Feature Processing Part
-        self.feature_fc = nn.Linear(feature_dim, 128)
-        self.feature_norm = nn.LayerNorm(128)
-
-        # Label Embedding Part
-        self.label_embedding = nn.Embedding(label_dim, label_embedding_dim)
-        self.label_norm = nn.LayerNorm(label_embedding_dim)
-
-        # Cross-Attention Mechanism
-        self.cross_attention_fc = nn.Linear(128, 1)
-
-        # MLP (Multi-Layer Perceptron)
-        self.mlp_fc1 = nn.Linear(128, 256)
-        self.mlp_fc2 = nn.Linear(256, 128)
-
-        # Feed-Forward Network (FFN)
-        self.ffn_fc1 = nn.Linear(128, 64)
-        self.ffn_fc2 = nn.Linear(64, 1)
+        super(EMARewarder, self).__init__(
+            label_dim=label_dim, label_embedding_dim=label_embedding_dim, feature_dim=feature_dim)
 
         # EMA decay rate
         self.ema_decay = ema_decay
