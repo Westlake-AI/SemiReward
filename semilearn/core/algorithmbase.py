@@ -178,7 +178,7 @@ class AlgorithmBase:
         """
         decay ratio in SemiReward
         """
-        num = int(1+(self.num_train_iter/self.it)*1)
+        num = int(max(8, (1+(self.num_train_iter/self.it)*0.6)))
         return num
 
     def set_data_loader(self):
