@@ -31,7 +31,7 @@ class SoftMatchWeightingHook(MaskingHook):
     @torch.no_grad()
     def update(self, algorithm, probs_x_ulb):
         if algorithm.distributed and algorithm.world_size > 1:
-            probs_x_ulb = self.concat_all_gather(probs_x_ulb)
+            probs_x_ulb = concat_all_gather(probs_x_ulb)
         max_probs, max_idx = probs_x_ulb.max(dim=-1)
         if not self.per_class:
             prob_max_mu_t = torch.mean(max_probs) # torch.quantile(max_probs, 0.5)
