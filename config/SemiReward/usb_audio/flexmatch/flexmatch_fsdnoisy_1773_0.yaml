@@ -40,10 +40,10 @@ sample_rate: 16000
 seed: 1
 world_size: 1
 rank: 0
-multiprocessing_distributed: False
-dist_url: tcp://127.0.0.1:10002
+multiprocessing_distributed: True
+dist_url: tcp://127.0.0.1:10001
 dist_backend: nccl
-gpu: 0
+gpu: None
 use_wandb: False
 start_timing: 10000
 feature_dim: 768

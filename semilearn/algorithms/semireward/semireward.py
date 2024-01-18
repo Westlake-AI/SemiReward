@@ -61,11 +61,12 @@ class Rewarder(nn.Module):
         mlp_input = torch.add(cross_attention_output.unsqueeze(0).expand(8, -1), label_embed)
         mlp_output = F.relu(self.mlp_fc1(mlp_input))
         mlp_output = self.mlp_fc2(mlp_output)
-        
+
         # FFN Part
         ffn_output = F.relu(self.ffn_fc1(mlp_output))
         reward = torch.sigmoid(self.ffn_fc2(ffn_output))
         return reward
+
 
 
 class EMARewarder(nn.Module):
