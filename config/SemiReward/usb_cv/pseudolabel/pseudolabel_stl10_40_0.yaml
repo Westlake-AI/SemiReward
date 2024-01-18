@@ -15,7 +15,7 @@ eval_batch_size: 16
 num_warmup_iter: 5120
 num_labels: 40
 uratio: 1
-ema_m: 0.9999
+ema_m: 0.0
 p_cutoff: 0.98
 ulb_loss_ratio: 1.0
 unsup_warm_up: 0.4

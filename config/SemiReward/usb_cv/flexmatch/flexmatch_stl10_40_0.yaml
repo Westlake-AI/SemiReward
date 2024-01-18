@@ -41,10 +41,10 @@ num_workers: 4
 seed: 0
 world_size: 1
 rank: 0
-multiprocessing_distributed: False
-dist_url: tcp://127.0.0.1:10005
+multiprocessing_distributed: True
+dist_url: tcp://127.0.0.1:10016
 dist_backend: nccl
-gpu: 3
+gpu: None
 use_pretrain: True
 pretrain_path: https://github.com/microsoft/Semi-supervised-learning/releases/download/v.0.0.0/mae_pretrain_vit_base.pth
 start_timing: 20000

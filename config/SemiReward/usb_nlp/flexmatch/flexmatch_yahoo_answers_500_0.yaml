@@ -40,10 +40,10 @@ max_length: 512
 seed: 0
 world_size: 1
 rank: 0
-multiprocessing_distributed: False
-dist_url: tcp://127.0.0.1:10005
+multiprocessing_distributed: True
+dist_url: tcp://127.0.0.1:10016
 dist_backend: nccl
-gpu: 1
+gpu: None
 start_timing: 10000
 feature_dim: 768
 sr_lr: 0.0005
