@@ -4,8 +4,8 @@ numpy>=1.22.4
 pandas
 Pillow>=9.0.0
 progress>=1.6
-ruamel.yaml>=0.17.21
-ruamel.yaml.clib>=0.2.6
+ruamel.yaml==0.17.21
+ruamel.yaml.clib==0.2.6
 scikit-image>=0.19.3
 scikit-learn>=1.0.2
 scipy>=1.7.3
