@@ -79,11 +79,11 @@ class SRPseudoLabel(AlgorithmBase):
                 feats_x_ulb = outs_x_ulb['feat']
                 self.bn_controller.unfreeze_bn(self.model)
             # compute mask
-                mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=logits_x_ulb)
+                mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=logits_x_ulb.detach())
 
             # generate unlabeled targets using pseudo label hook
                 pseudo_label = self.call_hook("gen_ulb_targets", "PseudoLabelingHook", 
-                                          logits=logits_x_ulb if self.task_type == 'cls' else outs_x_ulb_pseudo,
+                                          logits=logits_x_ulb.detach() if self.task_type == 'cls' else outs_x_ulb_pseudo,
                                           use_hard_label=True)
             reward = rewarder(feats_x_ulb, pseudo_label)
             avg_reward=reward.mean()
@@ -120,11 +120,11 @@ class SRPseudoLabel(AlgorithmBase):
             sup_loss = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
 
             # compute mask
-            mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=logits_x_ulb)
+            mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=logits_x_ulb.detach())
 
             # generate unlabeled targets using pseudo label hook
             pseudo_label = self.call_hook("gen_ulb_targets", "PseudoLabelingHook", 
-                                          logits=logits_x_ulb if self.task_type == 'cls' else outs_x_ulb_pseudo,
+                                          logits=logits_x_ulb.detach() if self.task_type == 'cls' else outs_x_ulb_pseudo,
                                           use_hard_label=True)
             # SemiReward inference
             if self.it > self.start_timing:

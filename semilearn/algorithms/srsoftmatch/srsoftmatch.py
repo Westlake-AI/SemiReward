@@ -209,12 +209,6 @@ class SRSoftMatch(AlgorithmBase):
                     self.generator_optimizer.step()
                     self.rewarder_optimizer.step()
 
-            # calculate unlabeled loss
-            unsup_loss = self.consistency_loss(logits_x_ulb_s,
-                                          pseudo_label,
-                                          'ce',
-                                          mask=mask)
-
             total_loss = sup_loss + self.lambda_u * unsup_loss
 
         out_dict = self.process_out_dict(loss=total_loss, feat=feat_dict)

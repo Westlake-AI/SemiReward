@@ -210,12 +210,6 @@ class SRFreeMatch(AlgorithmBase):
                     self.generator_optimizer.step()
                     self.rewarder_optimizer.step()
 
-            # calculate unlabeled loss
-            unsup_loss = self.consistency_loss(logits_x_ulb_s,
-                                          pseudo_label,
-                                          'ce',
-                                          mask=mask)
-
             # calculate entropy loss
             if mask.sum() > 0:
                ent_loss, _ = entropy_loss(mask, logits_x_ulb_s, self.p_model, self.label_hist)
