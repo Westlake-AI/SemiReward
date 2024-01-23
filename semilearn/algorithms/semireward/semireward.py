@@ -62,7 +62,7 @@ class Rewarder(nn.Module):
         cross_attention_output = (cross_attention_weights * cross_attention_input).sum(dim=0)
         
         # MLP Part
-        mlp_input = torch.add(cross_attention_output.unsqueeze(0).expand(8, -1), label_embed)
+        mlp_input = torch.add(cross_attention_output.unsqueeze(0).expand(label_embed.size(0), -1), label_embed)
         mlp_output = F.relu(self.mlp_fc1(mlp_input))
         mlp_output = self.mlp_fc2(mlp_output)
 
@@ -113,7 +113,7 @@ class EMARewarder(Rewarder):
         cross_attention_output = (cross_attention_weights * cross_attention_input).sum(dim=0)
         
         # MLP Part
-        mlp_input = torch.add(cross_attention_output.unsqueeze(0).expand(8, -1), label_embed)
+        mlp_input = torch.add(cross_attention_output.unsqueeze(0).expand(label_embed.size(0), -1), label_embed)
         mlp_output = F.relu(self.mlp_fc1(mlp_input))
         mlp_output = self.mlp_fc2(mlp_output)
         
@@ -132,9 +132,9 @@ def cosine_similarity_n(x, y):
     # Calculate cosine similarity along the last dimension (dim=-1)
     cosine_similarity = torch.cosine_similarity(x, y, dim=-1, eps=1e-8)
 
-    # Reshape the result to [8, 1]
+    # Reshape the result to [first size of x, 1]
     normalized_similarity = (cosine_similarity + 1) / 2
-    normalized_similarity = normalized_similarity.view(8, 1)
+    normalized_similarity = normalized_similarity.view(x.size(0), 1)
 
     return normalized_similarity
 
