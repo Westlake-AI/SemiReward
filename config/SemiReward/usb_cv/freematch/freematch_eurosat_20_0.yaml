@@ -19,7 +19,7 @@ ema_m: 0.0
 hard_label: True
 T: 0.5
 ema_p: 0.999
-ent_loss_ratio: 0.001
+ent_loss_ratio: 0.0001
 img_size: 32
 crop_ratio: 0.875
 optim: AdamW
