@@ -47,7 +47,7 @@ gpu: None
 use_pretrain: True
 pretrain_path: https://github.com/microsoft/Semi-supervised-learning/releases/download/v.0.0.0/mae_pretrain_vit_base.pth
 start_timing: 20000
-feature_dim: 384
+feature_dim: 768
 sr_lr: 0.0005
 N_k: 10
 sr_ema: False
