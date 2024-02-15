@@ -16,7 +16,7 @@ num_warmup_iter: 5120
 num_labels: 40
 uratio: 1
 ema_m: 0.0
-p_cutoff: 0.98
+p_cutoff: 0.95
 ulb_loss_ratio: 1.0
 unsup_warm_up: 0.4
 img_size: 96
