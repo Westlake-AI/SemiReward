@@ -55,16 +55,11 @@ class SRPseudoLabel(AlgorithmBase):
         self.register_hook(FixedThresholdingHook(), "MaskingHook")
         super().set_hooks()
 
-    def data_generator(self, x_lb, x_ulb_w, rewarder,gpu):
+    def data_generator(self, x_ulb_w, rewarder,gpu):
         gpu = gpu
         rewarder = rewarder.eval()
         for _ in range(self.sr_decay()):  
             with self.amp_cm():
-
-                outs_x_lb = self.model(x_lb)
-                logits_x_lb = outs_x_lb['logits']
-                feats_x_lb = outs_x_lb['feat']
-
             # calculate BN only for the first batch
                 self.bn_controller.freeze_bn(self.model)
                 if self.task_type == 'cls':
@@ -80,15 +75,15 @@ class SRPseudoLabel(AlgorithmBase):
                 self.bn_controller.unfreeze_bn(self.model)
             # compute mask
                 mask = self.call_hook("masking", "MaskingHook", logits_x_ulb=logits_x_ulb.detach())
-
             # generate unlabeled targets using pseudo label hook
                 pseudo_label = self.call_hook("gen_ulb_targets", "PseudoLabelingHook", 
-                                          logits=logits_x_ulb.detach() if self.task_type == 'cls' else outs_x_ulb_pseudo,
+                                          logits=logits_x_ulb.detach() if self.task_type == 'cls' else outs_x_ulb_pseudo.detach() ,
                                           use_hard_label=True)
+                                          
             reward = rewarder(feats_x_ulb, pseudo_label)
             avg_reward=reward.mean()
             mask2 = torch.where(reward >= avg_reward, torch.tensor(1).cuda(gpu), torch.tensor(0).cuda(gpu)).squeeze().float()
-            unsup_loss = self.consistency_loss(logits_x_ulb, pseudo_label,'ce', mask=mask,mask2=mask2)
+            unsup_loss = self.consistency_loss(logits_x_ulb if self.task_type == 'cls' else logits_x_ulb, pseudo_label, name='ce' if self.task_type == 'cls' else 'l1', mask=mask,mask2=mask2)
         unsup_loss = unsup_loss
 
         return unsup_loss
@@ -124,14 +119,14 @@ class SRPseudoLabel(AlgorithmBase):
 
             # generate unlabeled targets using pseudo label hook
             pseudo_label = self.call_hook("gen_ulb_targets", "PseudoLabelingHook", 
-                                          logits=logits_x_ulb.detach() if self.task_type == 'cls' else outs_x_ulb_pseudo,
+                                          logits=logits_x_ulb.detach() if self.task_type == 'cls' else logits_x_ulb.detach(),
                                           use_hard_label=True)
             # SemiReward inference
             if self.it > self.start_timing:
                 rewarder = self.rewarder
-                unsup_loss = self.data_generator(x_lb, x_ulb_w, rewarder, self.gpu)
+                unsup_loss = self.data_generator( x_ulb_w, rewarder,self.gpu)
             else:
-                unsup_loss = self.consistency_loss(logits_x_ulb, pseudo_label,
+                unsup_loss = self.consistency_loss(logits_x_ulb if self.task_type == 'cls' else logits_x_ulb, pseudo_label,
                                                name='ce' if self.task_type == 'cls' else 'l1',
                                                mask=mask)
 
@@ -161,8 +156,9 @@ class SRPseudoLabel(AlgorithmBase):
                         generated_label = self.generator(filtered_feats_x_ulb_w.squeeze(1)).detach()
                         generated_label=generated_label.long()
                         reward = self.rewarder(filtered_feats_x_ulb_w, generated_label.squeeze(1))
-                        generated_label = F.one_hot(generated_label.squeeze(1), num_classes=self.num_classes)
-                        filtered_pseudo_labels= F.one_hot(filtered_pseudo_labels.long(), num_classes=self.num_classes)
+                        num_classes=self.num_classes if self.task_type == 'cls' else self.range
+                        generated_label = F.one_hot(generated_label.squeeze(1), num_classes=num_classes)
+                        filtered_pseudo_labels= F.one_hot(filtered_pseudo_labels.long(), num_classes=num_classes)
                         cosine_similarity_score = cosine_similarity_n(generated_label.float(), filtered_pseudo_labels.float())
                         generator_loss = self.criterion(reward, torch.ones_like(reward).cuda(self.gpu))
                         rewarder_loss = self.criterion(reward, cosine_similarity_score)
@@ -176,8 +172,9 @@ class SRPseudoLabel(AlgorithmBase):
                         self.generator_optimizer.step()
                         self.rewarder_optimizer.step()
                 else:
-                    generated_label = F.one_hot(generated_label.squeeze(1), num_classes=self.num_classes)
-                    real_labels_tensor=F.one_hot(real_labels_tensor, num_classes=self.num_classes)
+                    num_classes=self.num_classes if self.task_type == 'cls' else self.range
+                    generated_label = F.one_hot(generated_label.squeeze(1), num_classes=num_classes)
+                    real_labels_tensor=F.one_hot(real_labels_tensor.long() if self.task_type == 'cls' else real_labels_tensor.long().squeeze(1), num_classes=num_classes)
                     cosine_similarity_score = cosine_similarity_n(generated_label.float(), real_labels_tensor.float()) 
                     generator_loss = self.criterion(reward, torch.ones_like(reward).cuda(self.gpu))
                     rewarder_loss = self.criterion(reward, cosine_similarity_score)
@@ -215,4 +212,5 @@ class SRPseudoLabel(AlgorithmBase):
             SSL_Argument('--N_k', int, 10),
             SSL_Argument('--sr_ema', str2bool, True),
             SSL_Argument('--sr_ema_m', float, 0.999),
+            SSL_Argument('--range', int, 100),
         ]
