@@ -36,10 +36,11 @@ def consistency_loss(logits, targets, name='ce', mask=None, mask2=None):
         loss = F.l1_loss(logits, targets, reduction='none').mean(dim=1)
     else:
         loss =ce_loss(logits,targets,reduction='none')
-    if mask is not None and mask2 is not None:
+    if mask is not None:
         # mask must not be boolean type
-        mask = torch.bitwise_and(mask.long(), mask2.long())
         loss = loss * mask
+    if mask2 is not None:
+        loss = loss * mask2
 
     return loss.mean()
 
