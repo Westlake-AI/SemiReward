@@ -48,6 +48,7 @@ class SRSoftMatch(AlgorithmBase):
 
         self.criterion = torch.nn.MSELoss()
 
+        self.max_reward = -float('inf')
     def init(self, T, hard_label=True, dist_align=True, dist_uniform=True, ema_p=0.999, n_sigma=2, per_class=False):
         self.T = T
         self.use_hard_label = hard_label
@@ -158,7 +159,7 @@ class SRSoftMatch(AlgorithmBase):
             # Generate pseudo labels using the generator (your pseudo-labeling process)
                 self.rewarder.train()
                 self.generator.train()
-                generated_label = self.generator(feats_x_lb.detach()).detach()
+                generated_label = self.generator(feats_x_lb.detach())
                 generated_label=generated_label.long()
             # Convert generated pseudo labels and true labels to tensors
                 real_labels_tensor = y_lb.cuda(self.gpu)          
@@ -167,16 +168,17 @@ class SRSoftMatch(AlgorithmBase):
                     filtered_pseudo_labels = pseudo_label.long()
                     filtered_feats_x_ulb_w = feats_x_ulb_w.detach()
                     rewarder = self.rewarder.eval()
-                    max_reward = -float('inf')
+                    
                     reward = self.rewarder(feats_x_ulb_w.detach(), pseudo_label.long())
                     reward = reward.mean()
-                    max_reward = torch.where(reward > max_reward, reward, max_reward)
-                    filtered_pseudo_labels = torch.where(reward > max_reward, pseudo_label.detach(), filtered_pseudo_labels)
-                    filtered_feats_x_ulb_w = torch.where(reward > max_reward, feats_x_ulb_w.detach(), filtered_feats_x_ulb_w)
+                    self.max_reward = torch.where(reward > self.max_reward, reward, self.max_reward)
+                    filtered_pseudo_labels = torch.where(reward > self.max_reward, pseudo_label.detach(), filtered_pseudo_labels)
+                    filtered_feats_x_ulb_w = torch.where(reward > self.max_reward, feats_x_ulb_w.detach(), filtered_feats_x_ulb_w)
                     if self.it % self.N_k == 0 and self.it > self.start_timing:
+                        self.max_reward = -float('inf')
                         self.rewarder.train()
                         self.generator.train()
-                        generated_label = self.generator(filtered_feats_x_ulb_w.squeeze(1)).detach()
+                        generated_label = self.generator(filtered_feats_x_ulb_w.squeeze(1))
                         generated_label=generated_label.long()
                         reward = self.rewarder(filtered_feats_x_ulb_w, generated_label.squeeze(1))
                         generated_label = F.one_hot(generated_label.squeeze(1), num_classes=self.num_classes)
