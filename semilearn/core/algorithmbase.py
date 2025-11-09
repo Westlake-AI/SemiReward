@@ -174,11 +174,12 @@ class AlgorithmBase:
             torch.distributed.barrier()
         return dataset_dict
 
-    def sr_decay(self):
+    def sr_decay(self, max_sampling_time=8):
         """
-        rewarder forward decay ratio in SemiReward
+        Rewarder sampling time decay ratio in SemiReward. For more detailed investigation,
+        please view GTR (https://openreview.net/forum?id=EjJD16oaly).
         """
-        num = int(max(8, (1 + (self.num_train_iter / self.it) )))
+        num = int(max(max_sampling_time, (1 + (self.num_train_iter / self.it) )))
         return num
 
     def set_data_loader(self):

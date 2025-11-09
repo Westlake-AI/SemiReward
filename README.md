@@ -88,6 +88,7 @@ class="center">
 
 ## News and Updates
 
+- [09/26/2024] Improving the thresholding technique in SemiReward, we proposed a new semi-supervised algorithm GTR (https://openreview.net/forum?id=EjJD16oaly).
 - [01/16/2024] SemiReward v0.2.0 has been updated and accepted by [ICLR'2024](https://openreview.net/forum?id=dnqPvUjyRI).
 - [10/18/2023] SemiReward v0.1.0 has been released.
 
